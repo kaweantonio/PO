@@ -1,0 +1,185 @@
+.navbar {
+	margin-bottom: 0px;
+}
+
+.apresentacao {
+	background: url(../img/bg1.jpg) no-repeat center center; 
+  -webkit-background-size: 100% 100%;
+  -moz-background-size: 100% 100%;
+  -o-background-size: 100% 100%;
+  background-size: 100% 100%;
+  height: 100vh;
+  margin-top: -42px;
+  align-items: center;
+}
+
+/*--------------------------------------------------------------
+# Hero Section
+--------------------------------------------------------------*/
+#hero {
+  display: table;
+  width: 100%;
+  height: 100vh;
+  background: url(../img/hero-bg.jpg) top center fixed;
+  background-size: cover;
+}
+
+#hero .hero-container {
+  background: rgba(0, 0, 0, 0.6);
+  display: table-cell;
+  margin: 0;
+  padding: 0 10px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+#hero h1 {
+  margin: 30px 0 10px 0;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 56px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  #hero h1 {
+    font-size: 28px;
+    line-height: 36px;
+  }
+}
+
+#hero h2 {
+  color: #eee;
+  margin-bottom: 50px;
+  font-size: 24px;
+}
+
+@media (max-width: 768px) {
+  #hero h2 {
+    font-size: 18px;
+    line-height: 24px;
+    margin-bottom: 30px;
+  }
+}
+
+/* Metodos Section
+--------------------------------*/
+.section {
+  padding: 80px 0;
+}
+.section-header {
+  color: #fff;
+  margin-bottom: 40px;
+}
+.section-header .section-title {
+  font-size: 30px;
+  margin-top: 0;
+  padding: 30px 0 0px;
+  text-transform: uppercase;
+  font-weight: 700;
+  position: relative;
+  letter-spacing: 1px;
+}
+.section-header .section-title:before {
+  position: absolute;
+  content: " ";
+  width: 50px;
+  top: 15px;
+  margin-left: 0;
+  margin-right: 0;
+  border-top: 2px solid #3498db;
+}
+.section-header .section-subtitle {
+  font-size: 14px;
+  font-weight: 400;
+  margin-top: 0;
+}
+
+.team-area .section-header {
+  color: #666;
+}
+.metodo {
+  background: #f6f6f6;
+  border: 1px solid #f6f6f6;
+  text-align: center;
+  padding: 10px;
+  overflow: hidden;
+  -webkit-transition: all 0.2s linear;
+  -moz-transition: all 0.2s linear;
+  -o-transition: all 0.2s linear;
+  transition: all 0.2s linear;
+}
+.metodo img {
+  width: 100%;
+}
+.metodo .metodo-content {
+  padding: 30px;
+}
+.metodo h4 {
+  color: #3498db;
+  font-size: 18px;
+  text-transform: uppercase;
+}
+.metodo h6 {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  margin: 15px 0;
+}
+.metodo .team-social li {
+  display: inline-block;
+}
+.metodo .team-social li a {
+  -webkit-transition: all 0.2s;
+  -moz-transition: all 0.2s;
+  transition: all 0.2s;
+}
+.metodo .team-social i {
+  color: #3498db;
+  font-size: 16px;
+  margin: 0 3px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #3498db;
+  line-height: 32px;
+  text-align: center;
+  -webkit-transition: all 0.2s linear;
+  -moz-transition: all 0.2s linear;
+  -o-transition: all 0.2s linear;
+  transition: all 0.2s linear;
+}
+.metodo .team-social i:hover {
+  color: #fff;
+}
+.metodo .team-social .fa-facebook:hover {
+  background-color: #3b5998;
+  border-color: #3b5998;
+}
+.metodo .team-social .fa-twitter:hover {
+  background-color: #55acee;
+  border-color: #55acee;
+}
+.metodo .team-social .fa-dribble:hover {
+  background-color: #D34836;
+  border-color: #D34836;
+}
+.metodo .team-social .fa-flickr:hover {
+  background-color: #ff0084;
+  border-color: #ff0084;
+}
+.metodo .team-social .fa-youtube:hover {
+  background-color: #CC181E;
+  border-color: #CC181E;
+}
+.metodo .team-social .fa-google-plus:hover {
+  background-color: #dd4b39;
+  border-color: #dd4b39;
+}
+.metodo .team-social .fa-linkedin:hover {
+  background-color: #007bb5;
+  border-color: #007bb5;
+}
+.metodo:hover {
+  box-shadow: 0 0 10px 1px rgba(76, 76, 76, 0.41);
+}
