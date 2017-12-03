@@ -165,7 +165,7 @@ function alteraTabela(){
 			if (j < numVars-1)
 				$restr.append(' + ');
 			else
-				$restr.append('  <select id="cp'+(i+1)+'" type="text" class="opcao-restricao"><option value="0" selected><=</option><option value="1">>=</option><option value="2">=</option></select> ');		
+				$restr.append('  <select id="cp'+(i+1)+'" type="text" class="opcao-restricao"><option value="0" selected>&le;</option><option value="1">&ge;</option><option value="2">=</option></select> ');		
 		}
 		$restr.append(' <input id="b'+(i+1)+'" type="text" placeholder="0">&ensp;&ensp;<br>');
 	}
