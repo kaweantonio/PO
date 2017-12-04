@@ -288,13 +288,7 @@ function formapadrao(){
 		else custo.push(copiaCusto[i]);
 	}
 
-	custoVarArtificial = Array.max(copiaCusto);
-
-	if (custoVarArtificial <= 0)
-		custoVarArtificial = 1;
-	else custoVarArtificial *= 10;
-
-
+	custoVarArtificial = Math.abs(Array.max(copiaCusto)) * 10;
 
 	for (i = 0; i < numRestr; i++){
 		limitanteRestr = $("#cp"+(i+1)).val();
