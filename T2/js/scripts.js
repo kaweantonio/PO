@@ -1,5 +1,5 @@
 var numVars = 2;
-var numRestr = 2;
+var numRestr = 1;
 var trocaSinal; // bool para troca de sinal na resolução de problemas de maximização 
 var duasFases; // bool para indicar que o problema sera resolvido com duas fases
 var contadorIte = 0;
@@ -115,8 +115,8 @@ function validacao(){
 		alerta("Entre com um valor v&aacute;lido para o N&uacute;mero de Restri&ccedil;&otilde;es");
 		$('#numRestricoes').focus();
 		return 0;
-	} else if (num > 10 || num < 2) {
-		alerta("Entre com um valor entre 2 e 10 para o N&uacute;mero de Restri&ccedil;&otilde;es");
+	} else if (num > 10 || num < 1) {
+		alerta("Entre com um valor entre 1 e 10 para o N&uacute;mero de Restri&ccedil;&otilde;es");
 		$('#numRestricoes').focus();
 		return 0;
 	}
