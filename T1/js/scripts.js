@@ -508,7 +508,7 @@ function Simplex(){
 			imprimeSimplex();
 		}
 
-		if (typeof vetorBA !== 'undefined') {
+		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
 				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
@@ -572,7 +572,7 @@ function Simplex(){
 			custoBase[linhaMenorBA] = custo[colunaMenorValor];
 		}
 
-		if (typeof vetorBA === 'undefined') {
+		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
 				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
 					menorBA = vetorB[i];

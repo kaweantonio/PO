@@ -591,7 +591,7 @@ function SimplexFase1(){
 			imprimeSimplexFase1();
 		}
 
-		if (typeof vetorBA !== 'undefined') {
+		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
 				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
@@ -655,7 +655,7 @@ function SimplexFase1(){
 			custoBase[linhaMenorBA] = custoArtificial[colunaMenorValor];
 		}
 
-		if (typeof vetorBA === 'undefined') {
+		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
 				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
 					menorBA = vetorB[i];
@@ -722,7 +722,7 @@ function SimplexFase2(){
 			imprimeSimplexFase2();
 		}
 
-		if (typeof vetorBA !== 'undefined') {
+		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
 				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
@@ -786,7 +786,7 @@ function SimplexFase2(){
 			custoBase[linhaMenorBA] = custo[colunaMenorValor];
 		}
 
-		if (typeof vetorBA === 'undefined') {
+		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
 				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
 					menorBA = vetorB[i];

@@ -20,6 +20,7 @@ var z; // valor da função objetivo
 var zInteiro; // valor da funcao objetivo para solucao Inteira
 var menorBA // variavel para armazenar o menor valor positivo de b/[aij]
 var conjuntoSolucaoOtima; // vetor para Conj. de Solucao Otima
+var solucaoReal; // boolean para indicar se o problema tem solucao real
 var solucaoInteira; // vetor para Solucao Otima Inteira
 var salvaNumRestr; // salva numero de restricoes antes de efetuar os cortes
 var maxIte = 100; // maximo de iteracoes do metodo de cortes
@@ -252,7 +253,7 @@ $("#btCalcula").click(function (){
 		formapadrao();
 		Simplex();
 
-		if (typeof conjuntoSolucaoOtima !== 'undefined')
+		if (solucaoReal === true)
 			Cortes();
 
 		$('#solucao').show();
@@ -547,7 +548,7 @@ function Simplex(){
 			imprimeSimplex();
 		}
 
-		if (typeof vetorBA !== 'undefined') {
+		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
 				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
@@ -611,7 +612,7 @@ function Simplex(){
 			custoBase[linhaMenorBA] = custo[colunaMenorValor];
 		}
 
-		if (typeof vetorBA === 'undefined') {
+		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
 				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
 					menorBA = vetorB[i];
@@ -705,6 +706,10 @@ function analisaSolucao(menorBA){
 	$div_result.empty();
 
 	if (menorBA === Number.MAX_VALUE) {
+		$('#resultado-otimo').attr('class', 'col-md-12');
+		$('#resultado-otimo-inteiro').hide();
+		$('#iteracoes-cortes').hide('slow');
+		solucaoReal = false;
 		for (i = 0; i < base.length; i++) {
 			for (j = 0; j < artificial.length; j++) {
 				if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
@@ -721,7 +726,11 @@ function analisaSolucao(menorBA){
 			for (i = 0; i < base.length; i++) {
 				for (j = 0; j < artificial.length; j++) {
 					if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
+						$('#resultado-otimo').attr('class', 'col-md-12');
+						$('#resultado-otimo-inteiro').hide();
+						$('#iteracoes-cortes').hide('slow');
 						$div_result.append('Solu&ccedil;&atilde;o vazia');
+						solucaoReal = false;
 						return;
 					}
 				}
@@ -761,6 +770,7 @@ function analisaSolucao(menorBA){
 		if (trocaSinal)
 			z *= -1;
 		$div_result.append('<br><br>z<sup>&lowast;</sup> = '+round(z));
+		solucaoReal = true;
 		return;
 	}
 }
@@ -773,6 +783,7 @@ function Cortes(){
 	var basicaInteira; // armazena qual a variavel basica inteira a se realizar o corte
 	var linhaBasicaInteira;
 	var novaRestricao; // armazena nova restricao de corte a ser inserida no problema
+	contadorIteCortes = 0;
 
 	salvaNumRestr = numRestr;
 
@@ -853,7 +864,7 @@ function Cortes(){
 		for (i = 0; i < inteirasBase.length; i++){
 			linhaBasicaInteira = base.indexOf(inteirasBase[i]);		
 			valor = vetorB[linhaBasicaInteira];
-			if (Math.abs(valor - Math.floor(valor)) > 1e-5){
+			if (Math.abs(valor - Math.round(valor)) > 1e-5){
 				corte = 1;
 				basicaInteira = inteiras[i];
 				break;
@@ -961,6 +972,7 @@ function imprimeSimplexCortes(vetorBA){
 	for (i = 0; i < custoReduzido.length; i++) {
 		$div_it.append('<td>'+round(custoReduzido[i])+'</td>');			
 	}
+	solucaoReal = false;
 
 	for (i = 0; i < base.length; i++){
 		z += custo[base[i]-1] * vetorB[i];
@@ -1018,7 +1030,7 @@ function SimplexCortes(){
 			imprimeSimplexCortes();
 		}
 
-		if (typeof vetorBA !== 'undefined') {
+		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
 				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
@@ -1082,7 +1094,7 @@ function SimplexCortes(){
 			custoBase[linhaMenorBA] = custo[colunaMenorValor];
 		}
 
-		if (typeof vetorBA === 'undefined') {
+		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
 				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
 					menorBA = vetorB[i];
