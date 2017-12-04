@@ -1,0 +1,9 @@
+input[type="text"]{
+	display: inline-block; 
+	width: 50px;
+}
+
+.opcao-restricao {
+	display: inline-block;
+	width: 30px;
+}
