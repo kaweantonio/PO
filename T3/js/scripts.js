@@ -863,6 +863,7 @@ function Cortes(){
 
 	$('#resultado-otimo').attr('class', 'col-md-6');
 	$('#resultado-otimo-inteiro').show('slow');
+	$('#iteracoes-cortes').show('slow');
 	$div_result = $('#resultado-final-inteiro');
 	$div_result.empty();
 	$div_result.show();
@@ -1106,6 +1107,7 @@ function analisaSolucaoInteira(menorBA){
 	if (menorBA === Number.MAX_VALUE) {
 		$('#resultado-otimo').attr('class', 'col-md-6');
 		$('#resultado-otimo-inteiro').show();
+		$('#iteracoes-cortes').show('slow');
 		$div_result.append('M&eacute;todo n&atilde;o converge: ')
 		for (i = 0; i < base.length; i++) {
 			for (j = 0; j < artificial.length; j++) {
@@ -1128,6 +1130,7 @@ function analisaSolucaoInteira(menorBA){
 					if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
 						$('#resultado-otimo').attr('class', 'col-md-6');
 						$('#resultado-otimo-inteiro').show();
+						$('#iteracoes-cortes').show();
 						$div_result.append('M&eacute;todo n&atilde;o converge: Solu&ccedil;&atilde;o vazia.');
 						numRestr = salvaNumRestr;
 						return 1;
