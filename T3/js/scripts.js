@@ -22,8 +22,10 @@ var menorBA // variavel para armazenar o menor valor positivo de b/[aij]
 var conjuntoSolucaoOtima; // vetor para Conj. de Solucao Otima
 var solucaoReal; // boolean para indicar se o problema tem solucao real
 var solucaoInteira; // vetor para Solucao Otima Inteira
+var encontrouSolucaInteira // boolean para indicar se o problema tem solucao inteira
 var salvaNumRestr; // salva numero de restricoes antes de efetuar os cortes
 var maxIte = 100; // maximo de iteracoes do metodo de cortes
+var limpou = 0;
 
 $(document).ready(function(){
 	limpa();
@@ -243,6 +245,8 @@ function setaValoresPredefinidos(){
 $("#btCalcula").click(function (){
 	$div_ite = $('#iteracoes');
 	$div_iteCortes = $('#iteracoes-cortes');
+	encontrouSolucaInteira = false;
+	limpou = 0;
 
 	if (validacao() && inteiras.length !== 0) {
 		$div_ite.empty();
@@ -256,7 +260,7 @@ $("#btCalcula").click(function (){
 		if (solucaoReal === true)
 			Cortes();
 
-		$('#solucao').show();
+		$('#solucao').show('slow');
 		if ($('#mostrarIte').is(':checked')) {
 			$div_ite.show('slow');
 		}
@@ -274,12 +278,14 @@ $('#btLimpa').click(function (){
 	limpa();
 	atribuiValores();
 	alteraTabela();
+	$('#solucao').hide('slow');
+	limpou = 1;
 })
 
 $("#mostrarIte").change( function(){
-   if($(this).is(':checked') && typeof conjuntoSolucaoOtima !== 'undefined'){
+   if($(this).is(':checked') && !limpou){
    	$('#iteracoes').show('slow');
-   	if (typeof solucaoInteira !== 'undefined')
+   	if (encontrouSolucaInteira)
    		$('#iteracoes-cortes').show('slow');
    } else {
    	$('#iteracoes').hide('slow');
@@ -288,12 +294,8 @@ $("#mostrarIte").change( function(){
 });
  
 Array.max = function( array ){
-   return Math.max.apply( Math, array );
+   return Math.max.apply( null, array.map(Math.abs));
 };
-
-Array.min = function ( array ){
-	return Math.min.apply( Math, array );
-}
 
 function adicionaZeros(linha, coluna){
 	var i; // iterador
@@ -319,12 +321,15 @@ function formapadrao(){
 	}
 
 	for (i = 0; i < numVars; i++) {
-		if(trocaSinal)
+		if(trocaSinal && !Object.is(copiaCusto[i], 0))
 			custo.push(-1*copiaCusto[i]);
 		else custo.push(copiaCusto[i]);
 	}
 
-	custoVarArtificial = Math.abs(Array.max(copiaCusto)) * 10;
+	custoVarArtificial = Math.abs(Array.max(custo)) * 10;
+
+	if (custoVarArtificial === 0)
+		custoVarArtificial = 10;	
 
 	for (i = 0; i < numRestr; i++){
 		limitanteRestr = $("#cp"+(i+1)).val();
@@ -535,8 +540,12 @@ function Simplex(){
 
 		if (menorValor < 0){
 			vetorBA = [];
+			var ba;
 			for (i = 0; i < matriz.length; i++){
-				vetorBA.push(vetorB[i]/(matriz[i][colunaMenorValor]));
+				ba = vetorB[i]/(matriz[i][colunaMenorValor]);
+				if (!Number.isNaN(ba))
+					vetorBA.push(ba);
+				else vetorBA.push(+Infinity);
 			}
 
 			imprimeSimplex(vetorBA);
@@ -546,11 +555,11 @@ function Simplex(){
 
 		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
-				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
+				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
 					linhaMenorBA = i;
 					empate = 0;
-				} else if (vetorBA[i] === menorBA){
+				} else if (vetorBA[i] === menorBA && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 					empate = 1;
 				}
 			}
@@ -572,18 +581,9 @@ function Simplex(){
 				var novoMenorBA = Number.MAX_VALUE;
 
 				for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] > 0 && isFinite(vetorBA[i])) {
+					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])) {
 						novoMenorBA = vetorBA[i];
 						novaLinhaMenorBA = i;
-					}
-				}
-
-				if (novoMenorBA === Number.MAX_VALUE){
-					for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-						if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])) {
-							novoMenorBA = vetorBA[i];
-							novaLinhaMenorBA = i;
-						}
 					}
 				}
 
@@ -610,7 +610,7 @@ function Simplex(){
 
 		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
-				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
+				if (vetorB[i] < menorBA && vetorB[i] >= 0 && !Object.is(vetorB[i], -0) && isFinite(vetorB[i])){
 					menorBA = vetorB[i];
 					// linhaMenorBA = i;
 				}
@@ -621,7 +621,7 @@ function Simplex(){
 			break;
 	} while (menorValor < 0);
 
-	$('#msg'+contadorIte).append('Fim do Simplex');
+	$('#msg'+contadorIte).append('Fim do Simplex.');
 	analisaSolucao(menorBA);
 }
 
@@ -706,9 +706,10 @@ function analisaSolucao(menorBA){
 		$('#resultado-otimo-inteiro').hide();
 		$('#iteracoes-cortes').hide('slow');
 		solucaoReal = false;
-		for (i = 0; i < base.length; i++) {
-			for (j = 0; j < artificial.length; j++) {
-				if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
+
+		if (typeof artificial !== 'undefined'){
+			for (i = 0; i < artificial.length; i++) {
+				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
 					$div_result.append('Solu&ccedil;&atilde;o vazia');
 					return;
 				}
@@ -719,16 +720,14 @@ function analisaSolucao(menorBA){
 	}
 	else {
 		if (typeof artificial !== 'undefined'){
-			for (i = 0; i < base.length; i++) {
-				for (j = 0; j < artificial.length; j++) {
-					if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
-						$('#resultado-otimo').attr('class', 'col-md-12');
-						$('#resultado-otimo-inteiro').hide();
-						$('#iteracoes-cortes').hide('slow');
-						$div_result.append('Solu&ccedil;&atilde;o vazia');
-						solucaoReal = false;
-						return;
-					}
+			for (i = 0; i < artificial.length; i++) {
+				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
+					$('#resultado-otimo').attr('class', 'col-md-12');
+					$('#resultado-otimo-inteiro').hide();
+					$('#iteracoes-cortes').hide('slow');
+					$div_result.append('Solu&ccedil;&atilde;o vazia');
+					solucaoReal = false;
+					return;
 				}
 			}
 		}
@@ -774,32 +773,42 @@ function analisaSolucao(menorBA){
 function Cortes(){
 	var i, j; // iteradores
 	var corte = 0; // variavel boolean que indica se ainda é necessário realizar cortes ou não
-	var inteirasBase; // armazena as variaveis inteiras que estão na base
 	var valor; // valor da variavel inteira no vetorB 
 	var basicaInteira; // armazena qual a variavel basica inteira a se realizar o corte
 	var linhaBasicaInteira;
-	var novaRestricao; // armazena nova restricao de corte a ser inserida no problema
 	contadorIteCortes = 0;
 
 	salvaNumRestr = numRestr;
 
-	inteirasBase = base.filter(r => inteiras.includes(r));
+	// for (i = 0; i < inteirasBase.length; i++){
+	// 	linhaBasicaInteira = base.indexOf(inteirasBase[i]);		
+	// 	valor = vetorB[linhaBasicaInteira];
+	// 	if (Math.abs(valor - Math.floor(valor)) > 1e-5){
+	// 		corte = 1;
+	// 		basicaInteira = inteirasBase[i];
+	// 		break;
+	// 	}
+	// }
 
-	for (i = 0; i < inteirasBase.length; i++){
-		linhaBasicaInteira = base.indexOf(inteirasBase[i]);		
-		valor = vetorB[linhaBasicaInteira];
-		if (Math.abs(valor - Math.floor(valor)) > 1e-5){
-			corte = 1;
-			basicaInteira = inteiras[i];
-			break;
+	for (i = 0; i < inteiras.length; i++){
+		if (base.includes(inteiras[i])){
+			linhaBasicaInteira = base.indexOf(inteiras[i]);
+			valor = vetorB[linhaBasicaInteira];
+			if (Math.abs(valor - Math.round(valor)) > 1e-5){
+				corte = 1;
+				basicaInteira = inteiras[i];
+				break;
+			}
 		}
 	}
 
 	if (corte === 0){
-		$('#msg'+contadorIte).append('<br>Nenhuma vari&aacute;vel selecionada com valor n&atilde;o inteiro, portanto nenhum corte &eacute; necess&aacute;rio.');
+		$('#msg'+contadorIte).append('<br>Todas as vari&aacute;veis selecionadas com valor inteiro, portanto nenhum corte &eacute; necess&aacute;rio.');
 		$('#resultado-otimo-inteiro').hide('slow');
 		$('#iteracoes-cortes').hide('slow');
 		return;
+	} else {
+		$('#msg'+contadorIte).append(' In&iacute;cio dos Cortes.');
 	}
 
 	while (corte && contadorIteCortes <= maxIte) {
@@ -855,15 +864,16 @@ function Cortes(){
 			return;
 
 		corte = 0;
-		inteirasBase = base.filter(r => inteiras.includes(r));
 		
-		for (i = 0; i < inteirasBase.length; i++){
-			linhaBasicaInteira = base.indexOf(inteirasBase[i]);		
-			valor = vetorB[linhaBasicaInteira];
-			if (Math.abs(valor - Math.round(valor)) > 1e-5){
-				corte = 1;
-				basicaInteira = inteiras[i];
-				break;
+		for (i = 0; i < inteiras.length; i++){
+			if (base.includes(inteiras[i])){
+				linhaBasicaInteira = base.indexOf(inteiras[i]);
+				valor = vetorB[linhaBasicaInteira];
+				if (Math.abs(valor - Math.round(valor)) > 1e-5){
+					corte = 1;
+					basicaInteira = inteiras[i];
+					break;
+				}
 			}
 		}
 	}
@@ -878,6 +888,9 @@ function Cortes(){
 	if (contadorIteCortes > maxIte){
 		$div_result.append("Excedeu n&uacute;mero m&aacute;ximo de itera&ccedil;&otilde;es.");
 	} else {
+		$div_msgCorte = $('#msgCorte'+contadorIteCortes);
+		$div_msgCorte.append('<br>Todas as vari&aacute;veis selecionadas com valor inteiro, portanto fim dos cortes.');
+
 		solucaoInteira = []; // solucao otima unica
 
 		for (i = 0; i < numVars; i++){
@@ -1017,8 +1030,12 @@ function SimplexCortes(){
 
 		if (menorValor < 0){
 			vetorBA = [];
+			var ba;
 			for (i = 0; i < matriz.length; i++){
-				vetorBA.push(vetorB[i]/(matriz[i][colunaMenorValor]));
+				ba = vetorB[i]/(matriz[i][colunaMenorValor]);
+				if (!Number.isNaN(ba))
+					vetorBA.push(ba);
+				else vetorBA.push(+Infinity);
 			}
 
 			imprimeSimplexCortes(vetorBA);
@@ -1028,11 +1045,11 @@ function SimplexCortes(){
 
 		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
-				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
+				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
 					linhaMenorBA = i;
 					empate = 0;
-				} else if (vetorBA[i] === menorBA){
+				} else if (vetorBA[i] === menorBA && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 					empate = 1;
 				}
 			}
@@ -1054,18 +1071,9 @@ function SimplexCortes(){
 				var novoMenorBA = Number.MAX_VALUE;
 
 				for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] > 0 && isFinite(vetorBA[i])) {
+					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])) {
 						novoMenorBA = vetorBA[i];
 						novaLinhaMenorBA = i;
-					}
-				}
-
-				if (novoMenorBA === Number.MAX_VALUE){
-					for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-						if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])) {
-							novoMenorBA = vetorBA[i];
-							novaLinhaMenorBA = i;
-						}
 					}
 				}
 
@@ -1092,7 +1100,7 @@ function SimplexCortes(){
 
 		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
-				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
+				if (vetorB[i] < menorBA && vetorB[i] >= 0 && !Object.is(vetorB[i], -0) && isFinite(vetorB[i])){
 					menorBA = vetorB[i];
 					// linhaMenorBA = i;
 				}
@@ -1103,7 +1111,7 @@ function SimplexCortes(){
 			break;
 	} while (menorValor < 0);
 
-	$('#msgCorte'+contadorIteCortes).append('Fim do Simplex');
+	$('#msgCorte'+contadorIteCortes).append('Fim do Simplex.');
 }
 
 function analisaSolucaoInteira(menorBA){
@@ -1112,14 +1120,17 @@ function analisaSolucaoInteira(menorBA){
 	$div_result = $('#resultado-final-inteiro');
 	$div_result.empty();
 
+	encontrouSolucaInteira = true;
+
 	if (menorBA === Number.MAX_VALUE) {
 		$('#resultado-otimo').attr('class', 'col-md-6');
 		$('#resultado-otimo-inteiro').show();
 		$('#iteracoes-cortes').show('slow');
 		$div_result.append('M&eacute;todo n&atilde;o converge: ')
-		for (i = 0; i < base.length; i++) {
-			for (j = 0; j < artificial.length; j++) {
-				if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
+
+		if (typeof artificial !== 'undefined'){
+			for (i = 0; i < artificial.length; i++) {
+				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
 					$div_result.append('Solu&ccedil;&atilde;o vazia.');
 					numRestr = salvaNumRestr;
 					return 1;
@@ -1133,23 +1144,20 @@ function analisaSolucaoInteira(menorBA){
 	}
 	else {
 		if (typeof artificial !== 'undefined'){
-			for (i = 0; i < base.length; i++) {
-				for (j = 0; j < artificial.length; j++) {
-					if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
-						$('#resultado-otimo').attr('class', 'col-md-6');
-						$('#resultado-otimo-inteiro').show();
-						$('#iteracoes-cortes').show();
-						$div_result.append('M&eacute;todo n&atilde;o converge: Solu&ccedil;&atilde;o vazia.');
-						numRestr = salvaNumRestr;
-						return 1;
-					}
+			for (i = 0; i < artificial.length; i++) {
+				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
+					$('#resultado-otimo').attr('class', 'col-md-6');
+					$('#resultado-otimo-inteiro').show();
+					$('#iteracoes-cortes').show();
+					$div_result.append('M&eacute;todo n&atilde;o converge: Solu&ccedil;&atilde;o vazia.');
+					numRestr = salvaNumRestr;
+					return 1;
 				}
 			}
 		}
 		return 0;
 	}
 }
-
 
 function round(value) {
 	return Math.round(value * 1000) / 1000;

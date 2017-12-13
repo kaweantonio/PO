@@ -21,6 +21,7 @@ var z; // valor da função objetivo
 var zArtificial; // valor da função objetivo artificial
 var conjuntoSolucaoOtima; // vetor para Conj. de Solucao Otima
 var contadorSolucao = 1; // variavel para indicar numero de solucoes
+var limpou = 0;
 
 $(document).ready(function(){
 	limpa();
@@ -231,6 +232,7 @@ function setaValoresPredefinidos(){
 
 $("#btCalcula").click(function (){
 	$div_ite = $('#iteracoes');
+	limpou = 0;
 
 	if (validacao()) {
 		$div_ite.empty();
@@ -244,7 +246,7 @@ $("#btCalcula").click(function (){
 			duasFases = 0;
 			SimplexFase2();
 		}
-		$('#solucao').show();
+		$('#solucao').show('slow');
 		if ($('#mostrarIte').is(':checked'))
 			$div_ite.show('slow');
 		else $div_ite.hide('slow');
@@ -255,21 +257,19 @@ $('#btLimpa').click(function (){
 	limpa();
 	atribuiValores();
 	alteraTabela();
+	$('#solucao').hide('slow');
+	limpou = 1;
 })
 
 $("#mostrarIte").change( function(){
-   if($(this).is(':checked') && typeof conjuntoSolucaoOtima !== 'undefined'){
+   if($(this).is(':checked') && !limpou){
    	$('#iteracoes').show('slow');
    } else $('#iteracoes').hide('slow');
 });
  
 Array.max = function( array ){
-   return Math.max.apply( Math, array );
+   return Math.max.apply( null, array.map(Math.abs));
 };
-
-Array.min = function ( array ){
-	return Math.min.apply( Math, array );
-}
 
 function adicionaZeros(linha, coluna){
 	var i; // iterador
@@ -296,7 +296,9 @@ function formapadrao(){
 
 	if(trocaSinal) {
 		for (i = 0; i < numVars; i++) {
-			custo.push(-1*copiaCusto[i]);
+			if (!Object.is(copiaCusto[i],0))
+				custo.push(-1*copiaCusto[i]);
+			else custo.push(copiaCusto[i]);
 			custoArtificial.push(0);
 			idVariaveis.push(i+1);
 		}
@@ -582,8 +584,12 @@ function SimplexFase1(){
 
 		if (menorValor < 0){
 			vetorBA = [];
+			var ba;
 			for (i = 0; i < matriz.length; i++){
-				vetorBA.push(vetorB[i]/(matriz[i][colunaMenorValor]));
+				ba = vetorB[i]/(matriz[i][colunaMenorValor]);
+				if (!Number.isNaN(ba))
+					vetorBA.push(ba);
+				else vetorBA.push(+Infinity);
 			}
 
 			imprimeSimplexFase1(vetorBA);
@@ -593,11 +599,11 @@ function SimplexFase1(){
 
 		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
-				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
+				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
 					linhaMenorBA = i;
 					empate = 0;
-				} else if (vetorBA[i] === menorBA){
+				} else if (vetorBA[i] === menorBA && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 					empate = 1;
 				}
 			}
@@ -617,20 +623,11 @@ function SimplexFase1(){
 			if (basesAnteriores.containsArray(baseNova)) {
 				var novaLinhaMenorBA;
 				var novoMenorBA = Number.MAX_VALUE;
-
+				
 				for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] > 0 && isFinite(vetorBA[i])) {
+					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])) {
 						novoMenorBA = vetorBA[i];
 						novaLinhaMenorBA = i;
-					}
-				}
-
-				if (novoMenorBA === Number.MAX_VALUE){
-					for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-						if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])) {
-							novoMenorBA = vetorBA[i];
-							novaLinhaMenorBA = i;
-						}
 					}
 				}
 
@@ -657,7 +654,7 @@ function SimplexFase1(){
 
 		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
-				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
+				if (vetorB[i] < menorBA && vetorB[i] >= 0 && !Object.is(vetorB[i], -0) && isFinite(vetorB[i])){
 					menorBA = vetorB[i];
 					// linhaMenorBA = i;
 				}
@@ -713,8 +710,12 @@ function SimplexFase2(){
 
 		if (menorValor < 0){
 			vetorBA = [];
+			var ba;
 			for (i = 0; i < matriz.length; i++){
-				vetorBA.push(vetorB[i]/(matriz[i][colunaMenorValor]));
+				ba = vetorB[i]/(matriz[i][colunaMenorValor]);
+				if (!Number.isNaN(ba))
+					vetorBA.push(ba);
+				else vetorBA.push(+Infinity);
 			}
 
 			imprimeSimplexFase2(vetorBA);
@@ -724,11 +725,11 @@ function SimplexFase2(){
 
 		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
 			for (i = 0; i < vetorBA.length; i++){
-				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
+				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 					menorBA = vetorBA[i];
 					linhaMenorBA = i;
 					empate = 0;
-				} else if (vetorBA[i] === menorBA){
+				} else if (vetorBA[i] === menorBA && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 					empate = 1;
 				}
 			}
@@ -750,18 +751,9 @@ function SimplexFase2(){
 				var novoMenorBA = Number.MAX_VALUE;
 
 				for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] > 0 && isFinite(vetorBA[i])) {
+					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])) {
 						novoMenorBA = vetorBA[i];
 						novaLinhaMenorBA = i;
-					}
-				}
-
-				if (novoMenorBA === Number.MAX_VALUE){
-					for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-						if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])) {
-							novoMenorBA = vetorBA[i];
-							novaLinhaMenorBA = i;
-						}
 					}
 				}
 
@@ -782,13 +774,13 @@ function SimplexFase2(){
 			pivotamento(linhaMenorBA, colunaMenorValor);
 			$('#msg'+contadorIte).append('Entra x<sub>'+idVariaveis[colunaMenorValor]+'</sub> e sai x<sub>'+base[linhaMenorBA]+'</sub> da base.<br>Incremento de '+round(custoReduzido[colunaMenorValor]*vetorBA[linhaMenorBA])+' em z na próxima itera&ccedil;&atilde;o <br>');
 			basesAnteriores.push(base.slice());
-			base[linhaMenorBA] = colunaMenorValor+1;
-			custoBase[linhaMenorBA] = custo[colunaMenorValor];
+			base[linhaMenorBA] = idVariaveis[colunaMenorValor];
+			custoBase[linhaMenorBA] = custo[idVariaveis.indexOf(colunaMenorValor)];
 		}
 
 		if (typeof vetorBA === 'undefined' || menorValor > 0) {
 			for (i = 0; i < vetorB.length; i++){
-				if (vetorB[i] < menorBA && vetorB[i] >= 0 && isFinite(vetorB[i])){
+				if (vetorB[i] < menorBA && vetorB[i] >= 0 && !Object.is(vetorB[i], -0) && isFinite(vetorB[i])){
 					menorBA = vetorB[i];
 					// linhaMenorBA = i;
 				}
@@ -909,9 +901,9 @@ function analisaSolucaoFase1(menorBA){
 
 	$div_result.empty();
 	if (menorBA === Number.MAX_VALUE) {
-		for (i = 0; i < base.length; i++) {
-			for (j = 0; j < artificial.length; j++) {
-				if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
+		if (typeof artificial !== 'undefined'){
+			for (i = 0; i < artificial.length; i++) {
+				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
 					$div_result.append('Solu&ccedil;&atilde;o vazia');
 					return;
 				}
@@ -922,12 +914,10 @@ function analisaSolucaoFase1(menorBA){
 	}
 	else {
 		if (typeof artificial !== 'undefined'){
-			for (i = 0; i < base.length; i++) {
-				for (j = 0; j < artificial.length; j++) {
-					if (base[i] === artificial[j] && vetorB[base[i]-1] !== 0){
-						$div_result.append('Solu&ccedil;&atilde;o vazia');
-						return;
-					}
+			for (i = 0; i < artificial.length; i++) {
+				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
+					$div_result.append('Solu&ccedil;&atilde;o vazia');
+					return;
 				}
 			}
 		}
@@ -945,30 +935,28 @@ function analisaSolucaoFase2(menorBA){
 	$div_result.empty();
 
 	if (menorBA === Number.MAX_VALUE) {
-		for (i = 0; i < base.length; i++) {
-			for (j = 0; j < artificial.length; j++) {
-				if (base[i] === artificial[j] && custo[base[i]-1] !== 0){
+		if (typeof artificial !== 'undefined'){
+			for (i = 0; i < artificial.length; i++) {
+				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
+					$div_result.append('Solu&ccedil;&atilde;o vazia');
+					return;
+				}
+			}
+		}
+		
+		$div_result.append('Solu&ccedil;&atilde;o ilimitada');
+	}
+	else {
+		if (typeof artificial !== 'undefined'){
+			for (i = 0; i < artificial.length; i++) {
+				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
 					$div_result.append('Solu&ccedil;&atilde;o vazia');
 					return;
 				}
 			}
 		}
 
-		$div_result.append('Solu&ccedil;&atilde;o ilimitada');
-	}
-	else {
-		if (typeof artificial !== 'undefined'){
-			for (i = 0; i < base.length; i++) {
-				for (j = 0; j < artificial.length; j++) {
-					if (base[i] === artificial[j] && custo[base[i]-1] !== 0){
-						$div_result.append('Solu&ccedil;&atilde;o vazia');
-						return;
-					}
-				}
-			}
-		}
-
-		if (custoReduzido.filter(k => k === 0).length > base.length){
+		if (custoReduzido.filter(k => round(k) === 0).length > base.length){
 			$('#msg'+contadorIte).append(' e in&iacute;cio da procura por mais solu&ccedil;&otilde;es');
 			procuraConjuntoSolucoes();
 			return;
@@ -1025,6 +1013,7 @@ function procuraConjuntoSolucoes(){
 	var solucaoEncontrada = []; // armazena a solucao encontrada na iteração i
 	var baseCalculada; // boolean para identicar que base ja foi calculada 
  	var empate; 
+ 	contadorSolucao = 1;
 
 	for (i = 0; i < numVars; i++){
 		if (base.includes(i+1)){
@@ -1068,18 +1057,22 @@ function procuraConjuntoSolucoes(){
 			
 			if (menorValor <= 0){
 				vetorBA = [];
+				var ba;
 				for (i = 0; i < matriz.length; i++){
-					vetorBA.push(vetorB[i]/(matriz[i][colunaMenorValor]));
+					ba = vetorB[i]/(matriz[i][colunaMenorValor]);
+					if (!Number.isNaN(ba))
+						vetorBA.push(ba);
+					else vetorBA.push(+Infinity);
 				}
 			}
 
 			if (typeof vetorBA !== 'undefined') {
 				for (i = 0; i < vetorBA.length; i++){
-					if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && isFinite(vetorBA[i])){
+					if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 						menorBA = vetorBA[i];
 						linhaMenorBA = i;
 						empate = 0;
-					} else if (vetorB[i] === menorBA){
+					} else if (vetorB[i] === menorBA && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
 						empate = 1;
 					}
 				}
@@ -1089,9 +1082,12 @@ function procuraConjuntoSolucoes(){
 				linhaMenorBA = selecaoLexicografica(vetorBA, menorBA, linhaMenorBA);
 			}
 
+			if (menorBA === Number.MAX_VALUE)
+				break;
+
 			for (i = 0; i < base.length; i++){
 				if (i === linhaMenorBA)
-					baseEncontrada.push(colunaMenorValor+1);
+					baseEncontrada.push(idVariaveis[colunaMenorValor]);
 				else baseEncontrada.push(base[i]);
 			}
 
@@ -1118,8 +1114,8 @@ function procuraConjuntoSolucoes(){
 		if (menorValor <= 0 && typeof linhaMenorBA !== 'undefined' && menorBA !== Number.MAX_VALUE) {
 			pivotamento(linhaMenorBA, colunaMenorValor);
 			$('#msg'+contadorIte).append('Entra x<sub>'+idVariaveis[colunaMenorValor]+'</sub> e sai x<sub>'+base[linhaMenorBA]+'</sub> da base.<br>Incremento de '+round(custoReduzido[colunaMenorValor]*vetorBA[linhaMenorBA])+' em z na próxima itera&ccedil;&atilde;o');
-			base[linhaMenorBA] = colunaMenorValor+1;
-			custoBase[linhaMenorBA] = custo[colunaMenorValor];
+			base[linhaMenorBA] = idVariaveis[colunaMenorValor];
+			custoBase[linhaMenorBA] = custo[idVariaveis.indexOf(colunaMenorValor)];
 		}
 		
 		if (basesEncontradas.length < numVars){
