@@ -1,0 +1,30 @@
+input[type="text"]{
+	display: inline-block; 
+	width: 50px;
+}
+
+.opcao-restricao {
+	display: inline-block;
+	width: 30px;
+}
+
+.bg-solucao {
+  background-color: #00e676 !important;
+}
+
+.border-solucao {
+  border-color: #00e676 !important;
+}
+
+.card.border-solucao {
+  border-width: 1px;
+}
+
+#iteracoes .card {
+	border-radius: 0.5rem;
+	margin-bottom: 15px;
+}
+
+#iteracoes .card-header:first-child {
+    border-radius: 0.40rem 0.40rem 0 0;
+}
