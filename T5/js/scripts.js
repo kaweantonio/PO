@@ -367,9 +367,9 @@ function imprimeFP(somaOfertas, somaDemandas){
 	if (somaOfertas === somaDemandas){
 		$div_msg.append('&sum;O = &sum;D, portanto nenhum n&oacute; fict&iacute;cio adicionado.');
 	} else if (somaOfertas > somaDemandas) {
-		$div_msg.append('&sum;O > &sum;D. Adicionado n&oacute; fict&iacute;cio de demanda D<sub>'+matrizCustos[0].length+'</sub> com oferta de '+valorNoFicticio+'.');
+		$div_msg.append('&sum;O > &sum;D. Adicionado n&oacute; fict&iacute;cio de demanda D<sub>'+matrizCustos[0].length+'</sub> com demanda de '+valorNoFicticio+'.');
 	} else {
-		$div_msg.append('&sum;O < &sum;D. Adicionado n&oacute; fict&iacute;cio de oferta O<sub>'+matrizCustos.length+'</sub> com demanda de '+valorNoFicticio+'.');
+		$div_msg.append('&sum;O < &sum;D. Adicionado n&oacute; fict&iacute;cio de oferta O<sub>'+matrizCustos.length+'</sub> com oferta de '+valorNoFicticio+'.');
 	}
 }
 
