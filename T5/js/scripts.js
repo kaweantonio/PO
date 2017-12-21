@@ -1,12 +1,15 @@
 var limpou = 0;
 var numOfertas = 2;
 var numDemandas = 2;
+var trocaSinal; // bool para troca de sinal na resolução de problemas de maximização 
 // contador de iterações
 var contadorIte;
 // variáveis para realizar a validação
 var copiaMatrizCustos;
 var copiaVetorOfertas;
 var copiaVetorDemandas;
+// salva campos com arcos que não existem
+var arcosNaoExistentes;
 // variaveis para utilização no método de Transporte
 var matrizCustos; // armazena relação de custos entre Ofertas e Demandas
 var matriz; // matriz que armazena valores das caselas básicas e não básicas
@@ -185,6 +188,7 @@ function validacao(){
 	copiaMatrizCustos = [];
 	copiaVetorOfertas = [];
 	copiaVetorDemandas = [];
+	arcosNaoExistentes = [];
 	var num;
 
 	num = $('#ofertas').val();
@@ -231,6 +235,10 @@ function validacao(){
 			num = $('#x'+(i+1)+'-'+(j+1)).val().replace(/,/,'.');
 			if (num === '')
 				num = 0;
+			else if (num === '-'){
+				num = Infinity;
+				arcosNaoExistentes.push([i,j]);
+			}
 			copiaMatrizCustos[i][j] = parseFloat(num, 10);
 		}
 	}
@@ -295,10 +303,42 @@ function adicionaNoFicticio(somaOfertas, somaDemandas){
 	}
 }
 
+function numDigits(x) {
+  return Math.max(Math.floor(Math.log10(Math.abs(x))), 0) + 1;
+}
+
 function formaPadrao(){
 	var i, j; // iteradores
+	var numDigitos; // armazena maior número de dígitos da matriz
+	var Mgrande; // armazena valor de M grande para arcos que não existem
 	var somaOfertas, somaDemandas; // somatorio de ofertas e demandas
 	matriz = []; matrizCustos = []; matrizIndex = []; vetorOfertas = []; vetorDemandas = []; // inicialização de variaveis
+
+	if($("#objetivo").val() === "1") {
+		trocaSinal = 1;
+	} else trocaSinal = 0;
+
+	numDigitos = numDigits(copiaMatrizCustos[0][0]);
+	var aux;
+	for (i = 1; i < numDemandas; i++){
+		aux = numDigits(copiaMatrizCustos[0][i]);
+		if (aux > numDigitos || numDigitos === Infinity){
+			numDigitos = aux;
+		}
+	}
+
+	for (i = 1; i < numOfertas; i++){
+		for (j = 0; j < numDemandas; j++){
+			if (copiaMatrizCustos[i][j] !== Infinity){
+				aux = numDigits(copiaMatrizCustos[i][j]);
+				if (aux > numDigitos){
+					numDigitos = aux;
+				}
+			}
+		}
+	}
+	
+	Mgrande = Math.pow(10, numDigitos+1);
 
 	for (i = 0; i < numOfertas; i++){
 		vetorOfertas.push(copiaVetorOfertas[i]);
@@ -306,7 +346,11 @@ function formaPadrao(){
 		matrizCustos.push([]);
 		matrizIndex.push([]);
 		for (j = 0; j < numDemandas; j++){
-			matrizCustos[i][j] = copiaMatrizCustos[i][j];
+			if (trocaSinal && !Object.is(copiaMatrizCustos[i][j], 0) && isFinite(copiaMatrizCustos[i][j]))
+				matrizCustos[i][j] = (-1)*copiaMatrizCustos[i][j];
+			else if (!isFinite(copiaMatrizCustos[i][j]))
+				matrizCustos[i][j] = Mgrande;
+			else matrizCustos[i][j] = copiaMatrizCustos[i][j];
 			matriz[i][j] = 0;
 			matrizIndex[i][j] = false;
 		}
@@ -945,7 +989,7 @@ function imprimeTransporteQuadroFinal(){
 	if (valorEntrante === 0)
 		$div_msg.append('H&aacute; vari&aacute;veis n&atilde;o b&aacute;sicas com valor igual a zero, portanto existe mais de uma solu&ccedil;&atilde;o &oacute;tima com o mesmo custo (z).');
 	else {
-		$div_msg.append('Nenhuma vari&aacute;veis n&atilde;o b&aacute;sicas com valor igual a zero, portanto solu&ccedil;&atilde;o &oacute;tima &uatilde;nica.');
+		$div_msg.append('Nenhuma vari&aacute;veis n&atilde;o b&aacute;sicas com valor igual a zero, portanto solu&ccedil;&atilde;o &oacute;tima &uacute;nica.');
 	}
 }
 
@@ -974,10 +1018,14 @@ function imprimeSolucaoFinal(){
 		for (j = 0; j < matriz[0].length; j++){
 			// casela básica
 			if (matrizIndex[i][j]){
-				$div_row.append('<td>'+round(matrizCustos[i][j])+' / <b class="basica">'+round(matriz[i][j])+'</b></td>');
+				if (trocaSinal && !arcosNaoExistentes.containsArray([i,j]))
+					$div_row.append('<td>'+round((-1)*matrizCustos[i][j])+' / <b class="basica">'+round(matriz[i][j])+'</b></td>');
+				else $div_row.append('<td>'+round(matrizCustos[i][j])+' / <b class="basica">'+round(matriz[i][j])+'</b></td>');
 				z += matrizCustos[i][j] * matriz[i][j];
 			}  else { // casela não básica
-				$div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
+				if (trocaSinal && !arcosNaoExistentes.containsArray([i,j]))
+					$div_row.append('<td>'+round((-1)*matrizCustos[i][j])+'</td>');
+				else $div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
 			}
 		}
 
@@ -992,6 +1040,9 @@ function imprimeSolucaoFinal(){
 	for (i = 0; i < matriz[0].length; i++){
 		$div_row.append('<th>'+round(vetorDemandas[i])+'</th>');
 	}
+
+	if (trocaSinal)
+		z = (-1) * z;
 
 	$div_row.append('<th style="text-align: left;">z<sup>&lowast;</sup> = '+round(z)+'</th>');
 }
