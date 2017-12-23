@@ -318,26 +318,22 @@ function formaPadrao(){
 		trocaSinal = 1;
 	} else trocaSinal = 0;
 
-	numDigitos = numDigits(copiaMatrizCustos[0][0]);
-	var aux;
-	for (i = 1; i < numDemandas; i++){
-		aux = numDigits(copiaMatrizCustos[0][i]);
-		if (aux > numDigitos || numDigitos === Infinity){
-			numDigitos = aux;
+	var num = copiaMatrizCustos[0][0];
+
+	for (i = 0; i < numDemandas; i++){
+		if (copiaMatrizCustos[0][i] > num && isFinite(copiaMatrizCustos[0][i]))
+			num = copiaMatrizCustos[0][i];
+	}
+	
+	for (i = 1; i < numOfertas; i++){
+		for (j = 0; j < numDemandas; j++){
+			if (copiaMatrizCustos[i][j] > num && isFinite(copiaMatrizCustos[i][j]))
+				num = copiaMatrizCustos[i][j];
 		}
 	}
 
-	for (i = 1; i < numOfertas; i++){
-		for (j = 0; j < numDemandas; j++){
-			if (copiaMatrizCustos[i][j] !== Infinity){
-				aux = numDigits(copiaMatrizCustos[i][j]);
-				if (aux > numDigitos){
-					numDigitos = aux;
-				}
-			}
-		}
-	}
-	
+	numDigitos = numDigits(num);
+
 	Mgrande = Math.pow(10, numDigitos+1);
 
 	for (i = 0; i < numOfertas; i++){
@@ -657,21 +653,21 @@ function procuraCiclo(){
 	var sentidoAnterior; // salva sentido anterior, caso necessite pular uma casela
 	// variável boolean para indicar se foi possível realizar a marcação no sentido indicado
 	var marcou;
-	// variável para armazenar índices da casela básica marcada anteriormente,
+	// variável para armazenar índices das caselas básicas marcadas anteriormente,
 	// mas que não foi possível formar ciclo, portanto deve ser pulada
-	var marcadoAnteriormente;
+	var marcadoAnteriormente = [];
 
 	// marca casela não básica que entrará na base
 	marcaCiclo.push([linha, coluna]);
 	matrizIndex[linha][coluna] = true; // marca casela não básica como casela básica
 
 	do {
+		marcou = false;
 		if (!sentido){
-			marcou = false;
-			// procura casela básica no sentido vertical
+		 	// procura casela básica no sentido vertical
 			for (i = (linha+1)%m; i != linha; i = (i+1)%m){
 				// identifica casela básica
-				if(matrizIndex[i][coluna] && (!marcaCiclo.containsArray([i, coluna]) || (i === linhaEntrante && coluna === colunaEntrante))){
+				if(matrizIndex[i][coluna] && (!marcaCiclo.containsArray([i, coluna]) || (i === linhaEntrante && coluna === colunaEntrante)) && !marcadoAnteriormente.containsArray([i, coluna])){
 					linha = i;
 					marcaCiclo.push([linha, coluna]);
 					sentidoAnterior = 0;
@@ -681,11 +677,10 @@ function procuraCiclo(){
 				}
 			}
 		} else { // sentido === 1, procura casela básica no sentido horizontal
-			marcou = false;
 			// procura casela básica no sentido horizontal
 			for (i = (coluna+1)%n; i != coluna; i = (i+1)%n){
 				// identifica casela básica
-				if(matrizIndex[linha][i] && (!marcaCiclo.containsArray([linha, i]) || (linha === linhaEntrante && i === colunaEntrante))){
+				if(matrizIndex[linha][i] && (!marcaCiclo.containsArray([linha, i]) || (linha === linhaEntrante && i === colunaEntrante)) && !marcadoAnteriormente.containsArray([linha, i])){
 					coluna = i;
 					marcaCiclo.push([linha, coluna]);
 					sentidoAnterior = 1;
@@ -698,9 +693,9 @@ function procuraCiclo(){
 
 		// se não foi possível marcar, pula casela marcada anteriormente e realiza marcação novamente na próxima iteração
 		if (!marcou){
-			marcadoAnteriormente = marcaCiclo.pop();
-			linha = marcadoAnteriormente[0];
-			coluna = marcadoAnteriormente[1];
+			marcadoAnteriormente.push(marcaCiclo.pop());
+			linha = marcadoAnteriormente[marcadoAnteriormente.length-1][0];
+			coluna = marcadoAnteriormente[marcadoAnteriormente.length-1][1];
 			sentido = sentidoAnterior;
 			if (sentidoAnterior) // sentidoAnterior === 1
 				sentidoAnterior = 0;
@@ -801,15 +796,6 @@ function Transporte(){
 			pivotamento();
 		}
 	}
-
-	// do {
-	// 	calculaCustoReduzido();
-	// 	marcacao = criaMarcacao();
-	// 	if (marcacao){
-	// 		imprimeTransporte();
-	// 		pivotamento();
-	// 	}
-	// } while (marcacao);
 
 	imprimeTransporteQuadroFinal();
 }
