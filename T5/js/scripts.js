@@ -264,7 +264,9 @@ function restauraTabela(){
 
 	for (i = 0; i < copiaMatrizCustos.length; i++){
 		for (j = 0; j < copiaMatrizCustos[0].length; j++){
-			if (copiaMatrizCustos[i][j] !== 0)
+			if (!isFinite(copiaMatrizCustos[i][j]))
+				$('#x'+(i+1)+'-'+(j+1)).val('-');
+			else if (copiaMatrizCustos[i][j] !== 0)
 				$('#x'+(i+1)+'-'+(j+1)).val(copiaMatrizCustos[i][j]);
 		}
 	}
@@ -318,14 +320,9 @@ function formaPadrao(){
 		trocaSinal = 1;
 	} else trocaSinal = 0;
 
-	var num = copiaMatrizCustos[0][0];
-
-	for (i = 0; i < numDemandas; i++){
-		if (copiaMatrizCustos[0][i] > num && isFinite(copiaMatrizCustos[0][i]))
-			num = copiaMatrizCustos[0][i];
-	}
+	var num = Number.MIN_VALUE;
 	
-	for (i = 1; i < numOfertas; i++){
+	for (i = 0; i < numOfertas; i++){
 		for (j = 0; j < numDemandas; j++){
 			if (copiaMatrizCustos[i][j] > num && isFinite(copiaMatrizCustos[i][j]))
 				num = copiaMatrizCustos[i][j];
