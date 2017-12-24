@@ -174,6 +174,10 @@ function alteraTabela(){
 	}
 
 	$div_linha.append('<th></th>');
+
+	$(':input[type="text"]').keypress(function (event) { 
+		return isNumber(event, this) 
+	});
 }
 
 function alerta(msg){
