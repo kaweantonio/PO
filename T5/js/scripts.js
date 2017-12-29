@@ -974,9 +974,9 @@ function imprimeTransporteQuadroFinal(){
 	$div_msg = $('#msg'+contadorIte);
 	$div_msg.append('Fim das itera&ccedil;&otilde;es do m&eacute;todo de Transporte.<br>');
 	if (valorEntrante === 0)
-		$div_msg.append('H&aacute; vari&aacute;veis n&atilde;o b&aacute;sicas com valor igual a zero, portanto existe mais de uma solu&ccedil;&atilde;o &oacute;tima com o mesmo custo (z).');
+		$div_msg.append('H&aacute; vari&aacute;veis n&atilde;o b&aacute;sicas com custo reduzido igual a zero, portanto existe mais de uma solu&ccedil;&atilde;o &oacute;tima com o mesmo custo (z).');
 	else {
-		$div_msg.append('Nenhuma vari&aacute;veis n&atilde;o b&aacute;sicas com valor igual a zero, portanto solu&ccedil;&atilde;o &oacute;tima &uacute;nica.');
+		$div_msg.append('Nenhuma vari&aacute;vel n&atilde;o b&aacute;sica com custo reduzido igual a zero, portanto solu&ccedil;&atilde;o &oacute;tima &uacute;nica.');
 	}
 }
 
