@@ -2,7 +2,7 @@
 <html lang="pt-br">
   <head>
     <meta charset="utf-8">
-    <title>Simplex - Duas Fases | Pesquisa Operacional</title>
+    <title>Dualidade | Pesquisa Operacional</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <link rel="stylesheet" href="../css/bootstrap.min.css" media="screen">
@@ -25,6 +25,9 @@
               <a class="nav-link" href="../T1/index.html">Simplex</a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" href="../T2/index.html">Simplex - Duas Fases</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="../T3/index.html">Cortes</a>
             </li>
             <li class="nav-item">
@@ -40,9 +43,6 @@
               <a class="nav-link" href="../T7/index.html">Aloca&ccedil;&atilde;o</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../E1/index.html">Dualidade</a>
-            </li>
-            <li class="nav-item">
               <a class="nav-link" href="#">Sobre</a>
             </li>
           </ul>
@@ -55,8 +55,8 @@
       <div class="page-header" id="banner">
         <div class="row center">
           <div class="col-lg-12 col-md-12 col-sm-12">
-            <h1>Simplex - Duas Fases</h1>
-            <p class="lead">M&eacute;todo Simplex de Duas Fases</p>
+            <h1>Dualidade</h1>
+            <p class="lead">Convers&atilde;o de Problema na forma Primal em Dual.</p>
           </div>
         </div>
       </div>
@@ -82,11 +82,7 @@
                       <input type="number" id="numVariaveis" min="2" max="10" value="2" style="width: 40px;"></p>
                       <p class="lead">N&uacute;mero de restri&ccedil;&otilde;es: 
                       <input type="number" id="numRestricoes" min="1" max="10" value="1" style="width: 40px;"></p>
-                      <label class="form-check-label lead">
-                        <input class="form-check-input" id="mostrarIte" type="checkbox" checked>
-                        Mostrar itera&ccedil;&otilde;es
-                      </label><br><br>
-                      <button class="btn btn-success" id="btCalcula" type="button">Calcular</button>
+                      <button class="btn btn-success" id="btCalcula" type="button">Converter</button>
                       <button class="btn btn-danger" id="btLimpa" type="button">Limpar</button>
                     </form>                        
                   </div>
@@ -107,10 +103,17 @@
               </div> <!-- row -->
               <div class="row">
                 <div class="col-md-12">
-                    <h5 class="lead">Restri&ccedil;&otilde;es</h5>
-                    <div id="restricoes" style="white-space: pre;"></div>
+                  <h5 class="lead">Restri&ccedil;&otilde;es</h5>
+                  <div id="restricoes" style="white-space: pre;"></div>
                 </div>
-              </div>
+              </div> <!-- row -->
+              <br>
+              <div class="row">
+                <div class="col-md-12">
+                  <h5 class="lead">Vari&aacute;veis Livres</h5>
+                  <div id="variaveis-livres" style="white-space: nowrap;"></div>
+                </div>
+              </div> <!-- row -->
             </div> <!-- card-body -->
           </div> <!-- card -->
         </div> <!-- col-md-6 -->
@@ -136,20 +139,28 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col-md-12">
-                      <h4 class="card-title" style="text-align: center;">Forma Padr&atilde;o</h4>
-                      <p class="lead" id="forma-padrao" style="text-align: center;"></p>
+                      <h4 class="card-title" style="text-align: center;">Problema Primal</h4>
+                      <p class="lead" id="problema-primal" style="text-align: center;"></p>
                       <p class="lead" style="text-align: center;"><b>sujeito a:</b></p>
-                      <p class="lead" id="forma-padrao-restricoes" style="text-align: center;"></p><br>
+                      <p class="lead" id="problema-primal-restricoes" style="text-align: center;"></p>
+                      <p class="lead" id="msg-revisao" style="text-align: center;"></p><br>
+                    </div>
+                  </div>
+                  <div class="row" id="primal-revisado" style="display: none;">
+                    <div class="col-md-12">
+                      <h4 class="card-title" style="text-align: center;">Problema Primal Revisado</h4>
+                      <p class="lead" id="problema-primal-revisado" style="text-align: center;"></p>
+                      <p class="lead" style="text-align: center;"><b>sujeito a:</b></p>
+                      <p class="lead" id="problema-primal-revisado-restricoes" style="text-align: center;"></p>
+                      <p class="lead" id="msg-final" style="text-align: center;"></p><br>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-md-12">
-                      <h4 class="card-title" style="text-align: center;">Resultado obtido</h4>
-                      <p id="resultado-final" class="lead" style="text-align: center;"></p>
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-md-12" id="iteracoes" style="overflow-x:scroll; display:none;">
+                      <h4 class="card-title" style="text-align: center;">Problema Dual</h4>
+                      <p class="lead" id="problema-dual" style="text-align: center;"></p>
+                      <p class="lead" style="text-align: center;"><b>sujeito a:</b></p>
+                      <p class="lead" id="problema-dual-restricoes" style="text-align: center;"></p><br>
                     </div>
                   </div>
                 </div> <!-- card-body -->
@@ -169,7 +180,6 @@
         </div>
       </footer>
     </div>
-
 
 
     <script type="text/javascript" src="../js/jquery-3.2.1.min.js"></script>
