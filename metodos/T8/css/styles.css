@@ -3,7 +3,31 @@ input[type="text"]{
 	width: 50px;
 }
 
-.opcao-restricao {
-	display: inline-block;
-	width: 30px;
+#quadro table, #forma-padrao table, #resultado-otimo table {
+	width: auto;
+}
+
+#quadro table > thead > tr > th {
+	width: 75px;
+}
+
+#quadro table input[type="text"] {
+	height: auto;
+}
+
+#tabela-fp, #tabela-sf { /* centraliza table */
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.basica {
+	color: red;
+}
+
+.nao-basica {
+	color: blue;
+}
+
+.sinal {
+	color: green;
 }

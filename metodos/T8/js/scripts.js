@@ -1,58 +1,45 @@
-var numVars = 2;
-var numRestr = 1;
-var trocaSinal; // bool para troca de sinal na resolução de problemas de maximização 
-var contadorIte = 0;
-var matriz; // armazena matriz A da tabela Simplex
-var copiaMatriz;
-var custo; // vetor com custo das variaveis
-var copiaCusto;
-var base; // vetor com as variaveis que estao na base
-var artificial; // vetor para armazenar quais sao as variaveis artificiais
-var folgas; // vetor para armazenar quais sao as variaveis de folga 
-var vetorB; // vetor com o limite das restricoes
-var copiaVetorB;
-var custoBase; // vetor com custo das variaveis basicas 
-var custoReduzido; // vetor para armazenar calculo do custo reduzido
-var z; // valor da função objetivo
-var conjuntoSolucaoOtima; // vetor para Conj. de Solucao Otima
-var contadorSolucao = 1; // variavel para indicar numero de solucoes
 var limpou = 0;
+var numCidades = 2;
+var trocaSinal; // bool para troca de sinal na resolução de problemas de maximização 
+// contador de iterações
+var contadorIte;
+// variáveis para realizar a validação
+var copiaMatrizCustos;
+// variaveis para utilização no método de Transporte
+var matrizCustos; // armazena relação de custos entre Ofertas e Demandas
+var valorNoFicticio; // armazena valor de nó fictiocio adicionado no problema original
+// salva índices (linha e coluna) onde há um zero alocado.
+// a alocação é determinada pela menor quantidade de zeros em cada linha
+var colunasAlocadas, linhasAlocadas;
+// salva os índices (linha e coluna) dos zeros cortados,
+// ou seja, os zeros das linha e colunas que já tiveram zeros alocadas.
+var colunasCortadas, linhasCortadas;
+// variáveis para salvar linhas e colunas riscadas
+var colunaRiscada = [], linhaRiscada = [];
+// variável para armazenar o menor valor das casela não riscadas
+var menorValor;
 
 $(document).ready(function(){
 	limpa();
 	alteraTabela();
 });
 
-function atribuiValores(){
-	numVars = parseInt($('#numVariaveis').val(), 10)
-	numRestr = parseInt($('#numRestricoes').val(), 10)
+function deepClone(arr) {
+  var len = arr.length;
+  var newArr = new Array(len);
+  for (var i=0; i<len; i++) {
+    if (Array.isArray(arr[i])) {
+      newArr[i] = deepClone(arr[i]);
+    }
+    else {
+      newArr[i] = arr[i];
+    }
+  }
+  return newArr;
 }
 
-function limpa(){
-	document.getElementById('form-controle').reset();
-}
-
-$("#numVariaveis").on("change", function(){
-	if (validacao()) {
-		atribuiValores();
-		alteraTabela();
-		restauraTabela();
-	}
-});
-
-$("#numRestricoes").on("change", function(){
-	if (validacao()) {
-		atribuiValores();
-		alteraTabela();
-		restauraTabela();
-	}
-});
-
-function alerta(msg){
-	$('#msg-alerta').empty();
-	$('#msg-alerta').append(msg);
-
-	$('#secao-alerta').show();
+function round(value) {
+	return Math.round(value * 1000) / 1000;
 }
 
 function isIntegerNumber(evt, element) {
@@ -86,144 +73,6 @@ $('#form-controle input[type="number"]').keypress(function (event) {
 	return isIntegerNumber(event, this) 
 });
 
-function validacao(){
-	var i, j;
-	copiaCusto = [];
-	copiaMatriz = [];
-	copiaVetorB = [];
-	var num;
-
-	num = $('#numVariaveis').val();
-
-	if (num === ''){
-		alerta("Entre com um valor v&aacute;lido para o N&uacute;mero de Vari&aacute;veis");
-		$('#numVariaveis').focus();
-		return 0;
-	} else if (num > 10 || num < 2) {
-		alerta("Entre com um valor entre 2 e 10 para o N&uacute;mero de Vari&aacute;veis");
-		$('#numVariaveis').focus();
-		return 0;
-	}
-
-	num = $('#numRestricoes').val();
-
-	if (num === ''){
-		alerta("Entre com um valor v&aacute;lido para o N&uacute;mero de Restri&ccedil;&otilde;es");
-		$('#numRestricoes').focus();
-		return 0;
-	} else if (num > 10 || num < 1) {
-		alerta("Entre com um valor entre 1 e 10 para o N&uacute;mero de Restri&ccedil;&otilde;es");
-		$('#numRestricoes').focus();
-		return 0;
-	}
-
-	for (i = 0; i < numVars; i++){
-		num = $("#funcao-objetivo").find("input").eq(i).val().replace(/,/,'.');
-		if (num === '')
-			num = 0;
-		copiaCusto.push(parseFloat(num, 10));
-	}
-
-	for (i = 0; i < numRestr; i++){
-		copiaMatriz.push([]);
-
-		for (j = 0; j < numVars; j++){
-			num = $("#restr"+(i+1)).find("input").eq(j).val().replace(/,/,'.');
-			if (num === '')
-				num = 0;
-			copiaMatriz[i][j] = parseFloat(num, 10);
-		}
-
-		num = $("#restr"+(i+1)).find("input").last().val().replace(/,/,'.');
-		if (num === '')
-			num = 0;
-		copiaVetorB.push(parseFloat(num, 10));
-	}
-
-	$('#secao-alerta').hide();
-	return 1;
-}
-
-function alteraTabela(){
-	$div_func = $('#funcao-objetivo');
-	$div_restr = $('#restricoes');
-
-	$div_func.empty();
-	$div_restr.empty();
-
-	$div_func.append('z = ');
-	for (var i = 0; i < numVars; i++){
-		$div_func.append('<input id=" x'+(i+1)+'" type="text" placeholder="0"> x<sub>'+(i+1)+'</sub>')
-		if (i < numVars-1)
-				$div_func.append(' + ');
-	}
-
-	for (var i = 0; i < numRestr; i++){
-		$div_restr.append('<div id="restr'+(i+1)+'">');
-		$restr = $('#restr'+(i+1));
-		for (var j = 0; j < numVars; j++){
-			$restr.append('<input id="x'+(i+1)+(j+1)+'" type="text" placeholder="0"> x<sub>'+(j+1)+'</sub>');
-			if (j < numVars-1)
-				$restr.append(' + ');
-			else
-				$restr.append('  <select id="cp'+(i+1)+'" type="text" class="opcao-restricao"><option value="0" selected>&le;</option><option value="1">&ge;</option><option value="2">=</option></select> ');		
-		}
-		$restr.append(' <input id="b'+(i+1)+'" type="text" placeholder="0">&ensp;&ensp;<br>');
-	}
-
-	$(':input[type="text"]').keypress(function (event) { 
-		return isNumber(event, this) 
-	});
-}
-
-function restauraTabela(){
-	var i, j;
-
-	$div_func = $('#funcao-objetivo');
-	for (i = 0; i < copiaCusto.length; i++){
-		if (copiaCusto[i] !== 0){
-			$div_func.find("input").eq(i).val(copiaCusto[i]);
-		}
-	}
-
-	for (i = 0; i < copiaMatriz.length; i++){
-		$div_restr = $('#restr'+(i+1));
-		for (j = 0; j < copiaMatriz[0].length; j++) {
-			if (copiaMatriz[i][j] !== 0)
-				$div_restr.find("input").eq(j).val(copiaMatriz[i][j]);
-		}
-
-		if (copiaVetorB[i] !== 0)
-			$div_restr.find("input").last().val(copiaVetorB[i]);
-	}
-}
-
-function setaValoresPredefinidos(){
-	var i, j;
-	var num;
-
-	$div_func = $('#funcao-objetivo');
-
-	for (i = 0; i < numVars; i++){
-		num = $div_func.find("input").eq(i).val();
-		if (num === '')
-			$div_func.find("input").eq(i).val(0)
-	}
-
-	for (i = 0; i < numRestr; i++){
-		$restr = $('#restr'+(i+1));
-		for (j = 0; j < numVars; j++) {
-			num = $restr.find("input").eq(j).val();
-			if (num === '')
-			$restr.find("input").eq(j).val(0);
-		}
-
-		num = $restr.find("input").last().val() 
-		if (num === 0)
-			$restr.find("input").last().val(num);
-	}
-}
-
 $("#btCalcula").click(function (){
 	$div_ite = $('#iteracoes');
 	limpou = 0;
@@ -231,8 +80,9 @@ $("#btCalcula").click(function (){
 	if (validacao()) {
 		$div_ite.empty();
 		$div_ite.append('<h4 class="card-title" style="text-align: center;">Itera&ccedil;&otilde;es</h4>');
-		formapadrao();
-		Simplex();
+		formaPadrao();
+		Alocacao();
+		imprimeSolucaoFinal();
 		$('#solucao').show('slow');
 		if ($('#mostrarIte').is(':checked'))
 			$div_ite.show('slow');
@@ -246,105 +96,163 @@ $('#btLimpa').click(function (){
 	alteraTabela();
 	$('#solucao').hide('slow');
 	limpou = 1;
-})
+});
+
+function limpa(){
+	document.getElementById('form-controle').reset();
+}
 
 $("#mostrarIte").change( function(){
    if($(this).is(':checked') && !limpou){
    	$('#iteracoes').show('slow');
    } else $('#iteracoes').hide('slow');
 });
- 
-Array.max = function( array ){
-   return Math.max.apply( null, array.map(Math.abs));
-};
 
-function adicionaZeros(linha, coluna){
-	var i; // iterador
+$('#cidades').on('change', function(){
+	if (validacao()) {
+		atribuiValores();
+		alteraTabela();
+		restauraTabela();
+	}
+});
 
-	// adiciona zeros na coluna das linhas abaixo e acima da variavel adicionada
-	for (i = (linha+1)%numRestr; i != linha; i = (i+1)%numRestr){
-		matriz[i][coluna] = 0;
+function atribuiValores() {
+	numCidades = parseInt($('#cidades').val(), 10);
+}
+
+function alteraTabela(){
+	$div_quadro = $('#quadro');
+
+	$div_quadro.empty();
+
+	$div_quadro.append('<table class="table table-striped table-hover table-bordered"><thead class="table-light">'+'<tr id="cabecalho" style="text-align: center;"><th></th></tr></thead><tbody id="corpo"></tbody></table>');
+
+	$div_cabecalho = $('#cabecalho');
+	$div_corpo = $('#corpo');
+
+	for (i = 0; i < numCidades; i++){
+		$div_cabecalho.append('<th>C<sub>'+(i+1)+'</sub></th>');
+	}
+
+	for (i = 0; i < numCidades; i++){
+		$div_corpo.append('<tr id="row'+(i+1)+'"><th style="text-align: right;">C<sub>'+(i+1)+'</sub></th></tr>');
+		$div_linha = $('#row'+(i+1));
+		for (j = 0; j < numCidades; j++){
+			if (i === j)
+				$div_linha.append('<th style="text-align: center;">-</th>');
+			else		
+				$div_linha.append('<th><input id="x'+(i+1)+'-'+(j+1)+'" type="text" placeholder="0"></th>');
+		}
+	}
+
+	$(':input[type="text"]').keypress(function (event) { 
+		return isNumber(event, this) 
+	});
+}
+
+function alerta(msg){
+	$('#msg-alerta').empty();
+	$('#msg-alerta').append(msg);
+
+	$('#secao-alerta').show();
+}
+
+function validacao(){
+	var i, j;
+	copiaMatrizCustos = [];
+	arcosNaoExistentes = [];
+	var num;
+
+	num = $('#cidades').val();
+
+	if (num === ''){
+		alerta("Entre com um valor v&aacute;lido para o N&uacute;mero de Cidades");
+		$('#cidades').focus();
+		return 0;
+	} else if (num > 10 || num < 2){
+		alerta("Entre com um valor entre 2 e 10 para o N&uacute;mero de Cidades");
+		$('#cidades').focus();
+		return 0;
+	}
+
+	for (i = 0; i < numCidades; i++){
+		copiaMatrizCustos.push([]);
+		for (j = 0; j < numCidades; j++){
+			try {
+				num = $('#x'+(i+1)+'-'+(j+1)).val().replace(/,/,'.');
+				if (num === '')
+					num = 0;
+				else if (num === '-'){
+					num = Infinity;
+					arcosNaoExistentes.push([i,j]);
+				}
+			} catch(e){
+				num = Infinity;
+			}
+			copiaMatrizCustos[i][j] = parseFloat(num, 10);
+		}
+	}
+
+	$('#secao-alerta').hide();
+	return 1;
+}
+
+function restauraTabela(){
+	var i, j;
+
+	for (i = 0; i < copiaMatrizCustos.length; i++){
+		for (j = 0; j < copiaMatrizCustos[0].length; j++){
+			if (!isFinite(copiaMatrizCustos[i][j]))
+				$('#x'+(i+1)+'-'+(j+1)).val('-');
+			else if (copiaMatrizCustos[i][j] !== 0)
+				$('#x'+(i+1)+'-'+(j+1)).val(copiaMatrizCustos[i][j]);
+		}
 	}
 }
 
-function formapadrao(){
+Array.prototype.sumArray = function (){
+	return this.reduce((a, b) => a + b, 0);
+}
+
+function numDigits(x) {
+  return Math.max(Math.floor(Math.log10(Math.abs(x))), 0) + 1;
+}
+
+function formaPadrao(){
 	var i, j; // iteradores
-	var contador = numVars; // contador para adcionar variáveis de folga e artificial
-	var limitanteRestr; // limitante da restricao (<=; >=; =)
-	var custoVarArtificial; // valor de custo para variaveis artificiais
-	var valorB; // variavel para armazenar valor de b[i] a cada iteração
-	matriz = []; custo = []; base = []; artificial = []; vetorB = []; folgas = []; // inicializacao de variaveis
+	var Mgrande; // armazena valor de M grande para arcos que não existem
+	var somaOfertas, somaDemandas; // somatorio de ofertas e demandas
+	matrizCustos = []; // inicialização de variaveis
+
 	if($("#objetivo").val() === "1") {
 		trocaSinal = 1;
 	} else trocaSinal = 0;
 
-	for (i = 0; i < numRestr; i++) {
-		matriz.push([]);
+	var num = Number.MIN_VALUE;
+	
+	for (i = 0; i < numCidades; i++){
+		for (j = 0; j < numCidades; j++){
+			if (copiaMatrizCustos[i][j] > num && isFinite(copiaMatrizCustos[i][j]))
+				num = copiaMatrizCustos[i][j];
+		}
 	}
 
-	for (i = 0; i < numVars; i++) {
-		if(trocaSinal && !Object.is(copiaCusto[i], 0))
-			custo.push(-1*copiaCusto[i]);
-		else custo.push(copiaCusto[i]);
-	}
+	numDigitos = numDigits(num);
 
-	custoVarArtificial = Math.abs(Array.max(custo)) * 10;
+	Mgrande = Math.pow(10, numDigitos+1);
 
-	if (custoVarArtificial === 0)
-		custoVarArtificial = 10;	
-
-	for (i = 0; i < numRestr; i++){
-		limitanteRestr = $("#cp"+(i+1)).val();
-
-		valorB = copiaVetorB[i];
-		if (valorB < 0) {
-			vetorB.push((-1)*valorB);
-			switch(limitanteRestr) {
-				case "0": 
-					limitanteRestr="1";
-					break;
-				case "1":
-					limitanteRestr="0";
-					break;
-			}
-		}
-		else vetorB.push(valorB);
-
-		for (j = 0; j < numVars; j++) {
-			if (valorB < 0)
-				matriz[i][j] = (-1)*copiaMatriz[i][j];
-			else matriz[i][j] = copiaMatriz[i][j];
+	for (i = 0; i < numCidades; i++){
+		matrizCustos.push([]);
+		for (j = 0; j < numCidades; j++){
+			matrizCustos[i][j] = copiaMatrizCustos[i][j];
 		}
 
-		switch (limitanteRestr) {
-			case "0": // <= -> adicionar variavel de folga
-				custo.push(0);
-				matriz[i][contador] = 1;
-				adicionaZeros(i, contador);
-				contador++;
-				base.push(contador);
-				folgas.push([contador, i+1]);
-				break;
-			case "1": // >= -> adicionar variavel de folga negativa e artifical
-				custo.push(0);
-				matriz[i][contador] = -1;
-				adicionaZeros(i, contador);
-				contador++;
-				folgas.push([contador, i+1]);
-				custo.push(custoVarArtificial);
-				matriz[i][contador] = 1;
-				adicionaZeros(i, contador);
-				contador++;
-				base.push(contador);
-				artificial.push(contador);
-				break;
-			default: // = -> adcionar variavel artificial
-				custo.push(custoVarArtificial);
-				matriz[i][contador] = 1;
-				adicionaZeros(i, contador);
-				contador++;
-				base.push(contador);
-				artificial.push(contador);				
+		for (j = 0; j < numCidades; j++){
+			if (trocaSinal && !Object.is(copiaMatrizCustos[i][j], 0) && isFinite(copiaMatrizCustos[i][j]))
+				matrizCustos[i][j] = (-1)*copiaMatrizCustos[i][j];
+			else if (!isFinite(copiaMatrizCustos[i][j]))
+				matrizCustos[i][j] = Mgrande;
+			else matrizCustos[i][j] = copiaMatrizCustos[i][j];
 		}
 	}
 
@@ -352,553 +260,513 @@ function formapadrao(){
 }
 
 function imprimeFP(){
-	var i, j;
-	var m = matriz.length;
-	var n = matriz[0].length;
-
 	$div_fp = $('#forma-padrao');
-	$div_fprestr = $('#forma-padrao-restricoes');
 
 	$div_fp.empty();
-	$div_fprestr.empty();
 
-	$div_fp.append('Minimizar ');
+	$div_fp.append('<h4 class="card-title" style="text-align: center;">Forma Padr&atilde;o</h4><table id="tabela-fp" class="table table-striped table-hover table-bordered"><thead class="table-light">'+'<tr id="cabecalho-fp" style="text-align: center;"><th></th></tr></thead><tbody id="corpo-fp"></tbody></table><p id="fp-msg" class="lead" style="text-align: center;"></p><br>');
 
-	if (trocaSinal)
-		$div_fp.append(' -z = ');
-	else $div_fp.append(' z = ');
+	$div_cabecalho = $('#cabecalho-fp');
+	$div_corpo = $('#corpo-fp');
 
-	for (i = 0; i < n; i++) {
-		$div_fp.append(custo[i].toString()+'x<sub>'+(i+1)+'</sub>');
-		if (i < n-1) {
-			if (custo[i+1] >= 0)
-				$div_fp.append(' + ');
-			else $div_fp.append(' ');
-		}
+	for (i = 0; i < matrizCustos[0].length; i++){
+		$div_cabecalho.append('<th>D<sub>'+(i+1)+'</sub></th>');
 	}
 
-	for (i = 0; i < m; i++) {
-		for (j = 0; j < n; j++) {
-			$div_fprestr.append(matriz[i][j].toString()+'x<sub>'+(j+1)+'</sub>');
-			if (j < n-1) {
-				if (matriz[i][j+1] >= 0)
-					$div_fprestr.append(' + ');
-				else $div_fprestr.append(' ');
-			}
-			else { 
-				$div_fprestr.append(' = '+vetorB[i].toString()+'<br/>');
-			}
+	for (i = 0; i < matrizCustos.length; i++){
+		$div_corpo.append('<tr id="fp-row'+(i+1)+'"><th style="text-align: right;">O<sub>'+(i+1)+'</sub></th></tr>');
+		$div_linha = $('#fp-row'+(i+1));
+		for (j = 0; j < matrizCustos[0].length; j++){
+			$div_linha.append('<td>'+round(matrizCustos[i][j])+'</td>');
 		}
 	}
-
-	$div_fprestr.append(' x &ge; 0');
 }
 
-function imprimeSimplex(vetorBA){
-	var i, j; // iteradores
-	var contadorLinha = 1;
-	z = 0; // calculo de custo de z
+function subtraiMenorElementoLinhaColuna(){
+	var i, j;
+	// salva valores que foram substraídos de cada linha e coluna
+	var subLinha = [], subColuna = [];
+	var menor;
 
-	contadorIte++;
-	
-	$("#iteracoes").append('<table class="table table-striped table-hover table-bordered" id="iteracao'+contadorIte+'"><thead class="thead-dark">'+'<tr><th style="text-align:center;	" colspan="'+(custo.length+4)+'">Itera&ccedil&atilde;o '+contadorIte+'</tr></thead><tbody id="corpo'+contadorIte+'"><tr id="cabecalho'+contadorIte+'"><th></th><th>c</th></tr><tr id="it'+contadorIte+'linha'+contadorLinha+'"><th>c<sub>B</sub></th><th>B</th></tr></tbody></table><p id="msg'+contadorIte+'" class="lead" style="text-align:center;"></p><br/>');
-
-	$div_cab = $('#cabecalho'+contadorIte);
-	$div_it = $('#it'+contadorIte+'linha'+contadorLinha);
-	$div_corpo = $('#corpo'+contadorIte);
-
-	for (i = 0; i < custo.length; i++) {
-		$div_cab.append('<th>'+custo[i]+'</th>');
-		$div_it.append('<th>x<sub>'+(i+1)+'</sub></th>');
-	}
-
-	$div_cab.append('<th></th>');
-
-	if (typeof vetorBA != 'undefined'){
-		$div_cab.append('<th></th>');		
-	}	
-
-	$div_it.append('<th>b</th>');
-
-	if (typeof vetorBA !== "undefined"){
-		$div_it.append('<th>b/a</th>');
-	}
-
-	for (i = 0; i < base.length; i++) {
-		contadorLinha++;
-		$div_corpo.append('<tr id="it'+contadorIte+'linha'+contadorLinha+'"><td>'+custo[base[i]-1]+'</td><th>x<sub>'+base[i]+'</sub></th></tr>');
-		$div_it = $('#it'+contadorIte+'linha'+contadorLinha);
-		for (j = 0; j < matriz[0].length; j++)
-			$div_it.append('<td>'+round(matriz[i][j])+'</td');
-
-		$div_it.append('<td>'+round(vetorB[i])+'</td>');
-
-		if(typeof vetorBA !== 'undefined'){
-			if (isFinite(vetorBA[i]))
-				$div_it.append('<td>'+round(vetorBA[i])+'</td>');			
-			else $div_it.append('<td>&infin;</td>');
+	// subtrai menor valor de cada linha
+	for (i = 0; i < matrizCustos.length; i++){
+		menor = matrizCustos[i][0];
+		for (j = 1; j < matrizCustos[0].length; j++) {
+			if (matrizCustos[i][j] < menor){
+				menor = matrizCustos[i][j];
+			}
 		}
+
+		subLinha.push(menor);
+
+		for (j = 0; j < matrizCustos[0].length; j++){
+			matrizCustos[i][j] = round(matrizCustos[i][j]-menor);
+		}
+	}
+
+	imprimeSubtracaoLinha(subLinha);
+
+	// subtrai menor valor de cada coluna
+	for (i = 0; i < matrizCustos[0].length; i++) {
+		menor = matrizCustos[0][i];
+
+		for (j = 1; j < matrizCustos.length; j++){
+			if (matrizCustos[j][i] < menor){
+				menor = matrizCustos[j][i];
+			}
+		}
+
+		subColuna.push(menor);
+
+		for (j = 0; j < matrizCustos.length; j++){
+			matrizCustos[j][i] = round(matrizCustos[j][i]-menor);
+		}
+	}
+
+	imprimeSubtracaoColuna(subColuna);
+}
+
+// verifica se há uma alocação ótima representada por zeros
+function verificaSolucaoOtima(){
+	var i, j, k, l;
+	// variáveis para localizar a linha com a menor quantidade de zeros
+	var menor, indiceMenor;
+	var cont;
+	var cortado;
+	var index;
+	colunasAlocadas = [], linhasAlocadas = []; colunasCortadas = []; linhasCortadas = []; // inicializa varíaveis 
+	// variável para indicar se foi posśivel encontrar um zero a cada busca
+	var continua = true;
+
+	while (continua){
+		menor = Number.MAX_VALUE;
+		continua = false;
+		// procura linha com menor quantidade de zeros disponíveis			
+		for (i = 0; i < matrizCustos.length; i++){
+			cont = 0;
+			if (!linhasAlocadas.includes(i)){
+				for (j = 0; j < matrizCustos[0].length; j++){
+					if (matrizCustos[i][j] === 0 && !colunasAlocadas.includes(j)){
+						cortado = false;
+						for (k = 0; k < colunasCortadas.length; k++){
+							if (linhasCortadas[k] === i && colunasCortadas[k] === j){
+								cortado = true;
+							}
+						}
+
+						if (!cortado)
+							cont++;
+					}
+				}
+
+				if (cont < menor && cont > 0){
+					menor = cont;
+					indiceMenor = i;
+				}
+			}
+		}
+
+		// se encontrou linha com zero disponível, realiza marcação
+		if (menor > 0 && menor !== Number.MAX_VALUE){
+			continua = true; // continua procura de linhas disponíveis com zero
+			// insere indiceMenor no vetor de linhas,
+			// impedindo que mais de um zero seja alocado na mesma linha
+			linhasAlocadas.push(indiceMenor);
+			
+			// salva indice da coluna do primeiro zero encontrada na linha alocada na variável de colunas alocadas
+			for (j = 0; j < matrizCustos[0].length; j++){
+				if (matrizCustos[indiceMenor][j] === 0 && !colunasAlocadas.includes(j)) {
+					colunasAlocadas.push(j);
+					break;
+				}
+			}
+
+			// procura zeros nos índices das linhas e colunas alocadas.
+			// caso encontre, salva indices em linhas e colunas cortadas
+			k = linhasAlocadas[linhasAlocadas.length-1];
+			l = colunasAlocadas[colunasAlocadas.length-1];
+			var m = matrizCustos.length;
+			var n = matrizCustos[0].length;
+			
+			//procura pela linha
+			for (i = (k+1)%m; i != k; i = (i+1)%m){
+				if (matrizCustos[i][l] === 0){
+					cortado = false;
+					for (j = 0; j < linhasCortadas.length; j++){
+						if (linhasCortadas[j] === i && colunasCortadas[j] === l){
+							cortado = true; 
+							break;
+						}
+					}
+
+					if (!cortado){
+						linhasCortadas.push(i);
+						colunasCortadas.push(l);
+					}
+				}
+			}
+
+			// procura pela coluna
+			for (j = (l+1)%n; j != l; j = (j+1)%n){
+				if (matrizCustos[k][j] === 0){
+					cortado = false;
+					for (i = 0; i < linhasCortadas.length; i++){
+						if (linhasCortadas[i] === k && colunasCortadas[i] === j){
+							cortado = true;
+							break;
+						}
+					}
+
+					if (!cortado) {
+						linhasCortadas.push(k);
+						colunasCortadas.push(j);
+					}
+				}
+			}
+		}
+	}
+
+	imprimeVerificaoAlocacaoOtima(deepClone(linhasAlocadas), deepClone(colunasAlocadas));
+
+	if (linhasAlocadas.length === matrizCustos.length) {
+		$('#vf-msg'+contadorIte).append('Aloca&ccedil;&atilde;o &Oacute;tima encontrada. Fim das itera&ccedil;&otilde;es.');
+		return true;
+	}
+	else { 
+		$('#vf-msg'+contadorIte).append('Aloca&ccedil;&atilde;o &Oacute;tima n&atilde;o encontrada. Riscar tabela, alterar valores das caselas e verificar novamente.');
+		false;
+	}
+}
+
+// marca linhas e colunas com o menor número de retas possível
+function marcaZeros(){
+	var i, j, k; // iteradores=
+	var col, lin, index, numColMarcada, auxCol;
+	// variáveis para salvar indices das colunas e linhas marcadas
+	var colunaMarcada = [], linhaMarcada = [];
+	colunaRiscada = [], linhaRiscada = []; // inicializa variáveis
+
+	// marcar todas as linhas que não tenham um zero marcado
+	for (i = 0; i < matrizCustos.length; i++){
+		if(!linhasAlocadas.includes(i)){
+			linhaMarcada.push(i);
+		}
+	}
+
+	do {
+		// marcar colunas com zeros cortados das linhas marcadas
+		auxCol = colunaMarcada.length; // salva quantidade de colunas marcadas 
+		for (i = 0; i < linhaMarcada.length; i++){
+			lin = linhaMarcada[i];
+			while(linhasCortadas.includes(lin)){
+				index = linhasCortadas.indexOf(lin);
+				col = colunasCortadas[index];
+				if (!colunaMarcada.includes(col))
+					colunaMarcada.push(col);
+				linhasCortadas.splice(index,1);
+				colunasCortadas.splice(index,1);
+			}
+		}
+
+		// marcar linhas que tenham zeros alocados nas colunas recentemente marcadas
+		for (i = auxCol; i < colunaMarcada.length; i++){
+			col = colunaMarcada[i];
+
+			if (colunasAlocadas.includes(col)){
+				index = colunasAlocadas.indexOf(col);
+				lin = linhasAlocadas[index];
+				if (!linhaMarcada.includes(lin))
+					linhaMarcada.push(lin);
+			}
+		}
+	} while (auxCol !== colunaMarcada.length);
+
+	// linhas riscadas são aquelas não marcadas
+	for (i = 0; i < matrizCustos.length; i++){
+		if (!linhaMarcada.includes(i))
+			linhaRiscada.push(i);
+	}
+
+	// colunas riscadas são aquelas colunas que foram marcadas
+	for (i = 0; i < colunaMarcada.length; i++){
+		colunaRiscada.push(colunaMarcada[i]);
+	}
+
+	imprimeRiscar(deepClone(linhasAlocadas), deepClone(colunasAlocadas));
+}
+
+/*Realiza pivotamento do método de Alocação:
+	1- Determina o menor número das caselas não riscadas.
+	2- Subtrai das caselas não riscadas o valor determinado em 1.
+	3- Soma das caselas riscadas duplamente o valor determinado em 1.*/
+function pivotaTabela(){
+	var i, j; // iteradores
+	menorValor = Number.MAX_VALUE;
+
+	// determina menor valor das caselas não riscadas
+	for (i = 0; i < matrizCustos.length; i++){
+		if (!linhaRiscada.includes(i)){
+			for (j = 0; j < matrizCustos[0].length; j++){
+				if (!colunaRiscada.includes(j)){
+					if (matrizCustos[i][j] < menorValor){
+						menorValor = matrizCustos[i][j];
+					}
+				}
+			}
+		}
+	}
+
+	$('#mc-msg'+contadorIte).append('Menor valor encontrado das caselas n&atilde;o riscadas: '+menorValor+'. Subtrair valor das caselas n&atilde;o riscadas e somar valor nas caselas riscadas duplamente.');
+
+	// subtrai menor valor das caselas não riscadas
+	for (i = 0; i < matrizCustos.length; i++){
+		if(!linhaRiscada.includes(i)){
+			for (j = 0; j < matrizCustos[0].length; j++){
+				if (!colunaRiscada.includes(j)){
+					matrizCustos[i][j] = round(matrizCustos[i][j]-menorValor);
+				}
+			}
+		}
+	}
+
+	// soma menor valor das caselas duplamente riscadas
+	for (i = 0; i < linhaRiscada.length; i++){
+		for (j = 0; j < colunaRiscada.length; j++){
+			matrizCustos[linhaRiscada[i]][colunaRiscada[j]] += menorValor;
+		}
+	}
+
+	imprimePivotamento();
+}
+
+// alocação através do método húngaro
+function Alocacao(){
+	contadorIte = 0;
+
+	subtraiMenorElementoLinhaColuna();
+	contadorIte++;
+	while (!verificaSolucaoOtima()) {
+		marcaZeros();
+		pivotaTabela();
+		contadorIte++;
+		if (menorValor === 0)
+			break;
+	}
+}
+
+function imprimeSubtracaoLinha(menores){
+	var i, j;
+	var contadorLinha = 1;
+	
+	$("#iteracoes").append('<table class="table table-hover table-bordered" id="subtracao-linha"><thead class="thead-dark">'+'<tr><th style="text-align: center;" colspan="'+(matrizCustos[0].length+2)+'">Subtra&ccedil;&atilde;o do menor valor de cada Linha</tr></thead><tbody id="corpo-sbLinha"><tr id="cabecalho-sbLinha"><th></th></tr></tbody></table><p id="msg-sbLinha" class="lead" style="text-align:center;"></p><br/>');
+
+	$div_corpo = $('#corpo-sbLinha');
+	$div_cab = $('#cabecalho-sbLinha');
+
+	for (i = 0; i < matrizCustos[0].length; i++){
+		$div_cab.append('<th style="text-align: center">D<sub>'+(i+1)+'</sub></th>');
+	}
+
+	$div_cab.append('<td></td>');
+
+	for (i = 0; i < matrizCustos.length; i++){
+		$div_corpo.append('<tr id="sbLinha-row'+contadorLinha+'" style="text-align: center;"><th style="text-align: right">O<sub>'+(i+1)+'</sub></th></tr>');
+		$div_row = $('#sbLinha-row'+contadorLinha);
+		for (j = 0; j < matrizCustos[0].length; j++){
+			$div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
+		}
+
+		$div_row.append('<td>-('+round(menores[i])+')</td>');
+
+		contadorLinha++;
+	}
+}
+
+function imprimeSubtracaoColuna(menores){
+	var i, j;
+	var contadorLinha = 1;
+	var z = 0;
+	var Incremento;
+
+	$("#iteracoes").append('<table class="table table-hover table-bordered" id="subtracao-coluna"><thead class="thead-dark">'+'<tr><th style="text-align: center;" colspan="'+(matrizCustos[0].length+1)+'">Subtra&ccedil;&atilde;o do menor valor de cada Coluna</tr></thead><tbody id="corpo-sbColuna"><tr id="cabecalho-sbColuna"><th></th></tr></tbody></table><p id="msg-sbColuna" class="lead" style="text-align:center;"></p><br/>');
+
+	$div_corpo = $('#corpo-sbColuna');
+	$div_cab = $('#cabecalho-sbColuna');
+
+	for (i = 0; i < matrizCustos[0].length; i++){
+		$div_cab.append('<th style="text-align: center">D<sub>'+(i+1)+'</sub></th>');
+	}
+
+	for (i = 0; i < matrizCustos.length; i++){
+		$div_corpo.append('<tr id="sbColuna-row'+contadorLinha+'" style="text-align: center;"><th style="text-align: right">O<sub>'+(i+1)+'</sub></th></tr>');
+		$div_row = $('#sbColuna-row'+contadorLinha);
+		for (j = 0; j < matrizCustos[0].length; j++){
+			$div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
+		}
+
+		contadorLinha++;
 	}
 
 	contadorLinha++;
-	$div_corpo.append('<tr id="it'+contadorIte+'linha'+contadorLinha+'"><td></td><th>c<sub>r</sub></tr>');
-	$div_it = $('#it'+contadorIte+'linha'+contadorLinha);
-	for (i = 0; i < custoReduzido.length; i++) {
-		$div_it.append('<td>'+round(custoReduzido[i])+'</td>');			
+	$div_corpo.append('<tr id="sbColuna-row'+contadorLinha+'" style="text-align: center"><td></td></tr>');
+	$div_row = $('#sbColuna-row'+contadorLinha);
+	for (i = 0; i < menores.length; i++){
+		$div_row.append('<td>-('+round(menores[i])+')</td>');
 	}
-
-	for (i = 0; i < base.length; i++){
-		z += custo[base[i]-1] * vetorB[i];
-	}
-
-	$div_it.append('<td>'+round(z)+'</td>');					
-
-	if (typeof vetorBA !== 'undefined')
-		$div_it.append('<td></td>');					
 }
 
-function Simplex(){
-	var i, j; // iteradores
-	var soma; // variavel auxiliar para calculo da soma da multiplicacao entre custo da base e valores na matriz 
-	var menorValor // variavel para armazenar o menor valor no custo reduzido
-	var menorBA // variavel para armazenar o menor valor positivo de b/[aij]
-	var colunaMenorValor; // identificacao da coluna do menor valor no custo reduzido
-	var linhaMenorBA; // coluna do menor BA
-	var vetorBA; // vetor para calculo de b/a[ij]
-	var basesAnteriores = []; // salva bases anteriores encontradas pelo metodo 
-	var baseNova; // armazena nova base a ser utilizada
-	var empate; // boolean para indicar que houve empate na escolha do menorBA
-	contadorIte = 0;
+function imprimeVerificaoAlocacaoOtima(linhas, colunas){
+	var i, j;
+	var contadorLinha = 1;
 
-	do {
-		menorValor = Number.MAX_VALUE;
-		menorBA = Number.MAX_VALUE;
-		empate = 0;
-		custoBase = []; custoReduzido = []; // inicializao de variaveis
-		for (i = 0; i < base.length; i++){
-			custoBase.push(custo[base[i]-1]);
-		}
+	$("#iteracoes").append('<table class="table table-hover table-bordered" id="iteracao-vf'+contadorIte+'"><thead class="thead-dark">'+'<tr><th style="text-align: center;" colspan="'+(matrizCustos[0].length+1)+'">Itera&ccedil;&atilde;o '+contadorIte+' - Verica&ccedil;&atilde;o de Aloca&ccedil;&atilde;o &Oacute;tima</tr></thead><tbody id="vf-corpo'+contadorIte+'"><tr id="vf-cabecalho'+contadorIte+'"><th></th></tr></tbody></table><p id="vf-msg'+contadorIte+'" class="lead" style="text-align:center;"></p><br/>');
 
-		for (i = 0; i < custo.length; i++){
-			soma = 0;
-			for (j = 0; j < base.length; j++){
-					soma += custoBase[j] * matriz[j][i];
-			}
-			custoReduzido.push(custo[i] - soma);
-		}
+	$div_corpo = $('#vf-corpo'+contadorIte);
+	$div_cab = $('#vf-cabecalho'+contadorIte);
 
-		for (i = 0; i < custoReduzido.length; i++){
-			if (custoReduzido[i] < menorValor && !base.includes(i+1)){
-				menorValor = custoReduzido[i];
-				colunaMenorValor = i;
+	for (i = 0; i < matrizCustos[0].length; i++){
+		$div_cab.append('<th style="text-align: center">D<sub>'+(i+1)+'</sub></th>');
+	}
+
+	for (i = 0; i < matrizCustos.length; i++){
+		$div_corpo.append('<tr id="vf-it'+contadorIte+'-row'+contadorLinha+'" style="text-align: center;"><th style="text-align: right">O<sub>'+(i+1)+'</sub></th></tr>');
+		$div_row = $('#vf-it'+contadorIte+'-row'+contadorLinha);
+		for (j = 0; j < matrizCustos[0].length; j++){
+			if (linhas.includes(i) && matrizCustos[i][j] === 0){
+				if (colunas[linhas.indexOf(i)] === j) {
+					linhas = linhas.filter(item => item !== i);
+					colunas = colunas.filter(item => item !== j);
+					$div_row.append('<th>['+round(matrizCustos[i][j])+']</th>');
+				} else {
+					$div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
+				}
+			} else {
+				$div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
 			}
 		}
+		contadorLinha++;
+	}
+}
 
-		if (menorValor < 0){
-			vetorBA = [];
-			var ba;
-			for (i = 0; i < matriz.length; i++){
-				ba = vetorB[i]/(matriz[i][colunaMenorValor]);
-				if (!Number.isNaN(ba))
-					vetorBA.push(ba);
-				else vetorBA.push(+Infinity);
-			}
+function imprimeRiscar(linhas, colunas){
+	var i, j;
+	var contadorLinha = 1;
 
-			imprimeSimplex(vetorBA);
-		} else {
-			imprimeSimplex();
-		}
+	$("#iteracoes").append('<table class="table table-hover table-bordered" id="iteracao-mc'+contadorIte+'"><thead class="thead-dark">'+'<tr><th style="text-align: center;" colspan="'+(matrizCustos[0].length+1)+'">Itera&ccedil;&atilde;o '+contadorIte+' - Marca&ccedil;&atilde;o de linhas e colunas</tr></thead><tbody id="mc-corpo'+contadorIte+'"><tr id="mc-cabecalho'+contadorIte+'"><th></th></tr></tbody></table><p id="mc-msg'+contadorIte+'" class="lead" style="text-align:center;"></p><br/>');
 
-		if (typeof vetorBA !== 'undefined' && menorValor <= 0) {
-			for (i = 0; i < vetorBA.length; i++){
-				if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
-					menorBA = vetorBA[i];
-					linhaMenorBA = i;
-					empate = 0;
-				} else if (vetorBA[i] === menorBA && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
-					empate = 1;
+	$div_corpo = $('#mc-corpo'+contadorIte);
+	$div_cab = $('#mc-cabecalho'+contadorIte);
+
+	for (i = 0; i < matrizCustos[0].length; i++){
+		$div_cab.append('<th style="text-align: center">D<sub>'+(i+1)+'</sub></th>');
+	}
+
+	for (i = 0; i < matrizCustos.length; i++){
+		$div_corpo.append('<tr id="mc-it'+contadorIte+'-row'+contadorLinha+'" style="text-align: center;"><th style="text-align: right">O<sub>'+(i+1)+'</sub></th></tr>');
+		$div_row = $('#mc-it'+contadorIte+'-row'+contadorLinha);
+		if (linhaRiscada.includes(i)){
+			for (j = 0; j < matrizCustos[0].length; j++){
+				if (linhas.includes(i) && matrizCustos[i][j] === 0){
+					if (colunas[linhas.indexOf(i)] === j){
+						linhas = linhas.filter(item => item !== i);
+						colunas = colunas.filter(item => item !== j);
+						$div_row.append('<th class="table-danger">['+round(matrizCustos[i][j])+']</th>');
+					} else {
+						$div_row.append('<td class="table-danger">'+round(matrizCustos[i][j])+'</td>');	
+					}
+				} else {
+					$div_row.append('<td class="table-danger">'+round(matrizCustos[i][j])+'</td>');
 				}
 			}
-
-			if (empate){
-				linhaMenorBA = selecaoLexicografica(vetorBA, menorBA, linhaMenorBA);
-			}
-
-			baseNova = [];
-
-			for (i = 0; i < base.length; i++){
-				if(i === linhaMenorBA){
-					baseNova.push(colunaMenorValor+1);
-				} else baseNova.push(base[i]);
-			}
-
-			if (basesAnteriores.containsArray(baseNova)) {
-				var novaLinhaMenorBA;
-				var novoMenorBA = Number.MAX_VALUE;
-
-				for (i = (linhaMenorBA+1)%vetorBA.length; i != linhaMenorBA; i = (i+1)%vetorBA.length){
-					if (vetorBA[i] >= menorBA && vetorBA[i] <= novoMenorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])) {
-						novoMenorBA = vetorBA[i];
-						novaLinhaMenorBA = i;
+		} else {
+			for (j = 0; j < matrizCustos[0].length; j++){
+				if (colunaRiscada.includes(j)) {
+					if (linhas.includes(i) && matrizCustos[i][j] === 0){
+						if (colunas[linhas.indexOf(i)] === j){
+							linhas = linhas.filter(item => item !== i);
+							colunas = colunas.filter(item => item !== j);
+							$div_row.append('<th class="table-danger">['+round(matrizCustos[i][j])+']</th>');
+						} else {
+							$div_row.append('<td class="table-danger">'+round(matrizCustos[i][j])+'</td>');
+						}
+					} else {
+						$div_row.append('<td class="table-danger">'+round(matrizCustos[i][j])+'</td>');
+					}
+				} else {
+					if (linhas.includes(i) && matrizCustos[i][j] === 0){
+						if (colunas[linhas.indexOf(i)] === j){
+							linhas = linhas.filter(item => item !== i);
+							colunas = colunas.filter(item => item !== j);
+							$div_row.append('<th>['+round(matrizCustos[i][j])+']</th>');
+						} else {
+							$div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
+						}			
+					} else {
+						$div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
 					}
 				}
-
-				linhaMenorBA = novaLinhaMenorBA;
-				menorBA = novoMenorBA;
-
-				baseNova = [];
-
-				for (i = 0; i < base.length; i++){
-					if(i == linhaMenorBA){
-						baseNova.push(colunaMenorValor+1);
-					} else baseNova.push(base[i]);
-				}
 			}
 		}
-
-		if (menorValor < 0 && typeof linhaMenorBA !== 'undefined' && menorBA !== Number.MAX_VALUE) {
-			pivotamento(linhaMenorBA, colunaMenorValor);
-			$('#msg'+contadorIte).append('Entra x<sub>'+(colunaMenorValor+1)+'</sub> e sai x<sub>'+base[linhaMenorBA]+'</sub> da base.<br>Incremento de '+round(custoReduzido[colunaMenorValor]*vetorBA[linhaMenorBA])+' em z na próxima itera&ccedil;&atilde;o <br>');
-			basesAnteriores.push(base.slice());
-			base[linhaMenorBA] = colunaMenorValor+1;
-			custoBase[linhaMenorBA] = custo[colunaMenorValor];
-		}
-
-		if (typeof vetorBA === 'undefined' || menorValor > 0) {
-			for (i = 0; i < vetorB.length; i++){
-				if (vetorB[i] < menorBA && vetorB[i] >= 0 && !Object.is(vetorB[i], -0) && isFinite(vetorB[i])){
-					menorBA = vetorB[i];
-					// linhaMenorBA = i;
-				}
-			}	
-		}
-
-		if (menorBA === Number.MAX_VALUE)
-			break;
-	} while (menorValor < 0);
-
-	$('#msg'+contadorIte).append('Fim do Simplex');
-	analisaSolucao(menorBA);
-}
-
-function selecaoLexicografica(vetorBA, menorBA, linhaMenorBA){
-	var contadorEmpate = vetorBA.filter(k => k === menorBA).length; // contador de quantas linhas houve empate
-	var i, j; // iteradores
-	var linhasEmpate = []; // armazena os indices das linhas em que houve empate
-	var matrizEmpate = []; // armazena as linhas da matriz em que houve empate 
-	var vetorBEmpate = []; // armazena b[i] das linhas em que houve empate 
-	var linhaMatriz;
-	var menor;
-	var linhaMenor;
-	var igual;
-
-	// salva linhas para analise posterior
-	for (i = 0; i < contadorEmpate; i++){
-		matrizEmpate.push([]);
-		linhasEmpate.push(vetorBA.indexOf(menorBA, i));
-		for (j = 0; j < matriz[0].length; j++){
-			matrizEmpate[i][j] = matriz[linhasEmpate[i]][j];
-		}
-		vetorBEmpate.push(vetorB[linhasEmpate[i]]);
-	}
-
-	// realiza analise
-	linhaMenor = 0;
-	for (i = 0; i < matrizEmpate[0].length; i++){ // anda pela coluna
-		igual = 0;
-		matrizEmpate[0][i] = Math.abs(matrizEmpate[0][i]/vetorBEmpate[0]);
-		menor = matrizEmpate[0][i];
-		for (j = 1; j < matrizEmpate.length; j++){ // anda pela linha
-			matrizEmpate[j][i] = Math.abs(matrizEmpate[j][i]/vetorBEmpate[j]);
-			if (matrizEmpate[j][i] < menor){
-				menor = matrizEmpate[j][i];
-				linhaMenor = j;
-				igual = 0;
-			} else if (matrizEmpate[j][i] === menor){
-				linhaMenor = j;
-				igual = 1;
-			}
-		}
-
-		if (!igual) break;
-	}
-
-	if (igual){
-		return linhasEmpate[linhasEmpate.length-1];
-	} else return linhasEmpate[linhaMenor];
-}
-
-function pivotamento(linha, coluna) {
-	var i, j; // iteradores
-	var pivot; // pivot escolhido
-
-	pivot = matriz[linha][coluna];
-
-	for (i = 0; i < matriz[0].length; i++){
-		matriz[linha][i] /= pivot;
-	}
-
-	vetorB[linha] /= pivot;
-
-	for (i = (linha+1)%matriz.length; i != linha; i = (i+1)%matriz.length){
-		pivot = matriz[i][coluna] / matriz[linha][coluna];
-
-		for (j = 0; j < matriz[0].length; j++){
-			matriz[i][j] -= pivot*matriz[linha][j];
-		}
-
-		vetorB[i] -= pivot*vetorB[linha];
+		contadorLinha++;
 	}
 }
 
-function analisaSolucao(menorBA){
-	var i, j; // iteradores
+function imprimePivotamento(){
+	var i, j;
+	var contadorLinha = 1;
 
-	$div_result = $('#resultado-final');
+	$("#iteracoes").append('<table class="table table-hover table-bordered" id="iteracao-pv'+contadorIte+'"><thead class="thead-dark">'+'<tr><th style="text-align: center;" colspan="'+(matrizCustos[0].length+1)+'">Itera&ccedil;&atilde;o '+contadorIte+' - Pivotamento</tr></thead><tbody id="pv-corpo'+contadorIte+'"><tr id="pv-cabecalho'+contadorIte+'"><th></th></tr></tbody></table><p id="pv-msg'+contadorIte+'" class="lead" style="text-align:center;"></p><br/>');
+
+	$div_corpo = $('#pv-corpo'+contadorIte);
+	$div_cab = $('#pv-cabecalho'+contadorIte);
+
+	for (i = 0; i < matrizCustos[0].length; i++){
+		$div_cab.append('<th style="text-align: center">D<sub>'+(i+1)+'</sub></th>');
+	}
+
+	for (i = 0; i < matrizCustos.length; i++){
+		$div_corpo.append('<tr id="pv-it'+contadorIte+'-row'+contadorLinha+'" style="text-align: center;"><th style="text-align: right">O<sub>'+(i+1)+'</sub></th></tr>');
+		$div_row = $('#pv-it'+contadorIte+'-row'+contadorLinha);
+		for (j = 0; j < matrizCustos[0].length; j++){
+			$div_row.append('<td>'+round(matrizCustos[i][j])+'</td>');
+		}
+		contadorLinha++;
+	}
+}
+
+function imprimeSolucaoFinal(){
+	var i, j;
+	var contadorLinha = 1;
+	var z = 0;
+
+	$div_result = $('#resultado-otimo');
 	$div_result.empty();
 
-	if (menorBA === Number.MAX_VALUE) {
-		if (typeof artificial !== 'undefined') {
-			for (i = 0; i < artificial.length; i++) {
-				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
-					$div_result.append('Solu&ccedil;&atilde;o vazia');
-					return;
-				}
-			}
-		}	
+	$div_result.append('<h4 class="card-title" style="text-align: center;">Resultado obtido</h4><table id="tabela-sf" class="table table-striped table-hover table-bordered"><thead class="table-light"><tr style="text-align: center;"><th>Oferta<th>Demanda</th><th>Custo</th></tr></thead><tbody id="sf-corpo"></tbody></table><br>');
 
-		$div_result.append('Solu&ccedil;&atilde;o ilimitada');
-	}
-	else {
-		if (typeof artificial !== 'undefined'){
-			for (i = 0; i < artificial.length; i++) {
-				if (base.includes(artificial[i]) && vetorB[base.indexOf(artificial[i])] !== 0){
-					$div_result.append('Solu&ccedil;&atilde;o vazia');
-					return;
-				}
-			}
-		}
+	$div_corpo = $('#sf-corpo');
 
-		for (j = 0; j < custoReduzido.length; j++) {
-			if (!base.includes(j+1) && round(custoReduzido[j]) === 0) {
-				$('#msg'+contadorIte).append(' e in&iacute;cio da procura por mais solu&ccedil;&otilde;es');
-				procuraConjuntoSolucoes();
-				return;				
-			}
-		}
+	for (i = 0; i < matrizCustos.length; i++){
+		$div_corpo.append('<tr id="sf-linha'+contadorLinha+'" style="text-align: center;"></tr>');
+		$div_row = $('#sf-linha'+contadorLinha);
+		for (j = 0; j < matrizCustos[0].length; j++){
+			if (linhasAlocadas.includes(i) && matrizCustos[i][j] === 0){
+				if (colunasAlocadas[linhasAlocadas.indexOf(i)] === j){
+					linhasAlocadas = linhasAlocadas.filter(item => item !== i);
+					colunasAlocadas = colunasAlocadas.filter(item => item !== j);
 
-		conjuntoSolucaoOtima = []; // solucao otima unica
-
-		for (i = 0; i < numVars; i++){
-			if (base.includes(i+1)){
-				conjuntoSolucaoOtima.push(vetorB[base.indexOf(i+1)]);
-			} else {
-				conjuntoSolucaoOtima.push(0);
-			}
-		}
-
-		$div_result.append('<b>Solu&ccedil;&atilde;o &oacute;tima</b><br>x<sup>&lowast;</sup> = (');
-		for (i = 0; i < numVars-1; i++){
-			$div_result.append(round(conjuntoSolucaoOtima[i])+'&nbsp;&nbsp;');
-		}
-
-		$div_result.append(round(conjuntoSolucaoOtima[numVars-1])+')<sup>T</sup>');
-
-		var temFolga = 0;
-
-		for (i = 0; i < folgas.length; i++){
-			if (base.includes(folgas[i][0])){ // verifica se folga[i] esta na base
-				if (!temFolga) {
-					$div_result.append('<br><b>Folga das restri&ccedil;&otilde;es</b>');
-					temFolga = 1;
-				}
-
-				$div_result.append('<br>r<sub>'+folgas[i][1]+'</sub>: x<sub>'+folgas[i][0]+'</sub> = '+round(vetorB[base.indexOf(folgas[i][0])]));				
-			}
-		}
-
-		if (trocaSinal)
-			z *= -1;
-		$div_result.append('<br><br>z<sup>&lowast;</sup> = '+round(z));
-	}
-}
-
-function procuraConjuntoSolucoes(){
-	var i, j; // iteradores
-	var soma; // variavel auxiliar para calculo da soma da multiplicacao entre custo da base e valores na matriz 
-	var menorValor // variavel para armazenar o menor valor no custo reduzido
-	var menorBA // variavel para armazenar o menor valor positivo de b/[aij]
-	var colunaMenorValor; // identificacao da coluna do menor valor no custo reduzido
-	var linhaMenorBA; // coluna do menor BA
-	var vetorBA; // vetor para calculo de b/a[ij]
-	conjuntoSolucaoOtima = []; // inicialiazaçaõ de variáveis
-	var baseEncontrada = []; // vetor para armazenar a base encontrada na iteração i
-	var basesEncontradas = []; // vetor para armazenar as bases encontradas
-	var salvaVetorB = []; // vetor para salvar savlores do vetor B de cada base encontrada
-	var solucaoEncontrada = []; // armazena a solucao encontrada na iteração i
-	var baseCalculada; // boolean para identicar que base ja foi calculada 
- 	var empate; 
- 	var contadorSolucao = 1;
-
-	for (i = 0; i < numVars; i++){
-		if (base.includes(i+1)){
-			solucaoEncontrada.push(vetorB[base.indexOf(i+1)]);
-		} else {
-			solucaoEncontrada.push(0);
-		}
-	}
-	conjuntoSolucaoOtima.push(solucaoEncontrada);
-	baseEncontrada = base.slice();
-	basesEncontradas.push(baseEncontrada);
-	salvaVetorB.push(vetorB.slice());
-
-	do {
-		menorValor = Number.MAX_VALUE;
-		menorBA = Number.MAX_VALUE;
-		custoBase = []; custoReduzido = [];// inicializao de variaveis
-		for (i = 0; i < base.length; i++){
-			custoBase.push(custo[base[i]-1]);
-		}
-
-		for (i = 0; i < custo.length; i++){
-			soma = 0;
-			for (j = 0; j < base.length; j++){
-					soma += custoBase[j] * matriz[j][i];
-			}
-
-			custoReduzido.push(custo[i] - soma);
-		}
-
-		for (i = 0; i < custoReduzido.length; i++){
-			if (custoReduzido[i] < menorValor && !base.includes(i+1)){
-				menorValor = round(custoReduzido[i]);
-				colunaMenorValor = i;
-			}
-		}
-
-		do {
-			baseCalculada = 1;
-			baseEncontrada = [];
-			
-			if (menorValor <= 0){
-				vetorBA = [];
-				var ba;
-				for (i = 0; i < matriz.length; i++){
-					ba = vetorB[i]/(matriz[i][colunaMenorValor]);
-					if (!Number.isNaN(ba))
-						vetorBA.push(ba);
-					else vetorBA.push(+Infinity);
-				}
-			}
-
-			if (typeof vetorBA !== 'undefined') {
-				for (i = 0; i < vetorBA.length; i++){
-					if (vetorBA[i] < menorBA && vetorBA[i] >= 0 && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
-						menorBA = vetorBA[i];
-						linhaMenorBA = i;
-						empate = 0;
-					} else if (vetorB[i] === menorBA && !Object.is(vetorBA[i], -0) && isFinite(vetorBA[i])){
-						empate = 1;
+					if (i < copiaMatrizCustos.length && j < copiaMatrizCustos[0].length) {
+						$div_row.append('<td>O<sub>'+(i+1)+'</sub></td><td>D<sub>'+(j+1)+'</sub></td><td>'+round(copiaMatrizCustos[i][j])+'</td>');
+						z += copiaMatrizCustos[i][j];
+					} else {
+						$div_row.append('<td>O<sub>'+(i+1)+'</sub></td><td>D<sub>'+(j+1)+'</sub></td><td>0</td>');
 					}
-				}
-			}
-
-			if (empate){
-				linhaMenorBA = selecaoLexicografica(vetorBA, menorBA, linhaMenorBA);
-			}
-
-			if (menorBA === Number.MAX_VALUE)
-				break;
-
-			for (i = 0; i < base.length; i++){
-				if (i === linhaMenorBA)
-					baseEncontrada.push(colunaMenorValor+1);
-				else baseEncontrada.push(base[i]);
-			}
-
-			for (i = 0; i < basesEncontradas.length; i++){
-				if (basesEncontradas.containsArray(baseEncontrada)){
-					baseCalculada = 1;
-					break;
-				} else baseCalculada = 0;
-			}
-
-			if (baseCalculada){
-				var k = colunaMenorValor;
-				var n = custoReduzido.length;
-				for (i = (k+1)%n; i != k; i = (i+1)%n){
-					if (custoReduzido[i] === menorValor && !base.includes(i+1)) {
-						colunaMenorValor = i;
-						break;
-					}
-				}
-			}
-		} while(baseCalculada && basesEncontradas.length !== numVars);
-		imprimeSimplex(vetorBA);
-
-		if (menorValor <= 0 && typeof linhaMenorBA !== 'undefined' && menorBA !== Number.MAX_VALUE) {
-			pivotamento(linhaMenorBA, colunaMenorValor);
-			$('#msg'+contadorIte).append('Entra x<sub>'+(colunaMenorValor+1)+'</sub> e sai x<sub>'+base[linhaMenorBA]+'</sub> da base.<br>Incremento de '+round(custoReduzido[colunaMenorValor]*vetorBA[linhaMenorBA])+' em z na próxima itera&ccedil;&atilde;o');
-			base[linhaMenorBA] = colunaMenorValor+1;
-			custoBase[linhaMenorBA] = custo[colunaMenorValor];
-		}
-		
-		if (basesEncontradas.length < numVars){
-			solucaoEncontrada = [];
-			for (i = 0; i < numVars; i++){
-				if (base.includes(i+1)){
-					solucaoEncontrada.push(vetorB[base.indexOf(i+1)]);
-				} else {
-					solucaoEncontrada.push(0);
-				}
-			}
-			conjuntoSolucaoOtima.push(solucaoEncontrada);
-			basesEncontradas.push(baseEncontrada);
-			salvaVetorB.push(vetorB.slice());
-			contadorSolucao++;
-		}
-	} while (contadorSolucao < numVars);
-
-	imprimeSimplex();
-	$('#msg'+(contadorIte)).append('Fim da procura por mais solu&ccedil;&otilde;es');	
-
-	$div_result = $('#resultado-final');
-
-	for (i = 0; i < conjuntoSolucaoOtima.length; i++){
-		$div_result.append('<b>Solu&ccedil;&atilde;o &oacute;tima '+(i+1)+'</b><br>x<sup>&lowast;</sup> = (');
-		for (j = 0; j < conjuntoSolucaoOtima[0].length-1; j++){
-			$div_result.append(round(conjuntoSolucaoOtima[i][j])+'&nbsp;&nbsp;');
-		}
-		$div_result.append(round(conjuntoSolucaoOtima[i][j])+')<sup>T</sup><br/>');
-
-		var temFolga = 0;
-
-		for (j = 0; j < folgas.length; j++){
-			if (basesEncontradas[i].includes(folgas[j][0])){ // verifica se folga[i] esta na base
-				if (!temFolga) {
-					$div_result.append('<b>Folga das restri&ccedil;&otilde;es</b>');
-					temFolga = 1;
-				}
-
-				$div_result.append('<br>r<sub>'+folgas[j][1]+'</sub>: x<sub>'+folgas[j][0]+'</sub> = '+round(salvaVetorB[i][basesEncontradas[i].indexOf(folgas[j][0])]));				
+				}	
 			}
 		}
-
-		$div_result.append('<br><br>');
+		contadorLinha++;
 	}
-	if (trocaSinal)
-		z *= -1;
-	$div_result.append('z<sup>&lowast;</sup> = '+round(z));
-}
 
-function round(value) {
-	return Math.round(value * 1000) / 1000;
-}
-
-Array.prototype.containsArray = function(val) {
-    var hash = {};
-    for(var i=0; i<this.length; i++) {
-        hash[this[i]] = i;
-    }
-    return hash.hasOwnProperty(val);
+	contadorLinha++;
+	$div_corpo.append('<tr id="sf-linha'+contadorLinha+'" style="text-align: center;"><td></td><th>Total</th><th>'+round(z)+'</th></tr>');
 }
