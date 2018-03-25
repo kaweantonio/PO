@@ -2,17 +2,17 @@
 <html lang="pt-br">
   <head>
     <meta charset="utf-8">
-    <title>Simplex | Pesquisa Operacional</title>
+    <title>Bifurca&ccedil;&atilde;o e Limite | Pesquisa Operacional</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="stylesheet" href="../css/bootstrap.min.css" media="screen">
-    <link rel="stylesheet" href="../css/custom.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css" media="screen">
+    <link rel="stylesheet" href="../../css/custom.min.css">
     <link rel="stylesheet" href="css/styles.css">     
   </head>
   <body>
     <div class="navbar navbar-expand-lg fixed-top navbar-light bg-light">
       <div class="container">
-        <a href="../index.html" class="navbar-brand">Pesquisa Operacional</a>
+        <a href="../../index.html" class="navbar-brand">Pesquisa Operacional</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -22,25 +22,25 @@
 
           <ul class="nav navbar-nav ml-auto">
             <li class="nav-item">
-              <a class="nav-link" href="../T2/index.html">Simplex - Duas Fases</a>
+              <a class="nav-link" href="../../T1/index.html">Simplex</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T3/index.html">Cortes</a>
+              <a class="nav-link" href="../../T2/index.html">Simplex - Duas Fases</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T4/index.html">Bifurca&ccedil;&atilde;o e Limite</a>
+              <a class="nav-link" href="../../T3/index.html">Cortes</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T5/index.html">Transporte</a>
+              <a class="nav-link" href="../../T5/index.html">Transporte</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T6/index.html">Transbordo</a>
+              <a class="nav-link" href="../../T6/index.html">Transbordo</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T7/index.html">Aloca&ccedil;&atilde;o</a>
+              <a class="nav-link" href="../../T7/index.html">Aloca&ccedil;&atilde;o</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../E1/index.html">Dualidade</a>
+              <a class="nav-link" href="../../E1/index.html">Dualidade</a>
             </li>
           </ul>
         </div>
@@ -52,13 +52,12 @@
       <div class="page-header" id="banner">
         <div class="row center">
           <div class="col-lg-12 col-md-12 col-sm-12">
-            <h1>Simplex</h1>
-            <p class="lead">M&eacute;todo Simplex de Uma Fase</p>
+            <h1>Bifurca&ccedil;&atilde;o e Limite</h1>
+            <p class="lead">M&eacute;todo <i>Branch and Bound</i> para encontrar todas as solu&ccedil;&otilde;es &oacute;timas inteiras</p>
           </div>
         </div>
       </div>
     </div> <!-- container-->
-
 
     <div class="container">
       <div class="row">
@@ -104,6 +103,12 @@
               </div> <!-- row -->
               <div class="row">
                 <div class="col-md-12">
+                    <h5 class="lead">Vari&aacute;veis Inteiras</h5>
+                    <div id="variaveis-inteiras"></div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
                     <h5 class="lead">Restri&ccedil;&otilde;es</h5>
                     <div id="restricoes" style="white-space: pre;"></div>
                 </div>
@@ -140,14 +145,12 @@
                     </div>
                   </div>
                   <div class="row">
-                    <div class="col-md-12">
-                      <h4 class="card-title" style="text-align: center;">Resultado obtido</h4>
-                      <p id="resultado-final" class="lead" style="text-align: center;"></p>
+                    <div class="col-md-12" id="resultado-otimo-inteiro">
+                      <h4 class="card-title" style="text-align: center;">Resultado Inteiro obtido</h4>
+                      <p id="resultado-final-inteiro" class="lead" style="text-align: center;"></p>
                     </div>
                   </div>
-                  <div class="row">
-                    <div class="col-md-12" id="iteracoes" style="overflow-x:scroll; display:none;">
-                    </div>
+                  <div class="row" id="iteracoes" style="display:none;">
                   </div>
                 </div> <!-- card-body -->
               </div>
@@ -168,10 +171,11 @@
     </div>
 
 
-    <script type="text/javascript" src="../js/jquery-3.2.1.min.js"></script>
-    <script src="../js/popper.min.js"></script>
-    <script src="../js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../js/custom.js"></script>
+    <script type="text/javascript" src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/popper.min.js"></script>
+    <script src="../../js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../js/custom.js"></script>
+    <script type="text/javascript" src="js/arvore.binaria.js"></script>
     <script type="text/javascript" src="js/scripts.js"></script>
   </body>
 </html>

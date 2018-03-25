@@ -2,17 +2,17 @@
 <html lang="pt-br">
   <head>
     <meta charset="utf-8">
-    <title>Dualidade | Pesquisa Operacional</title>
+    <title>Simplex | Pesquisa Operacional</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="stylesheet" href="../css/bootstrap.min.css" media="screen">
-    <link rel="stylesheet" href="../css/custom.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css" media="screen">
+    <link rel="stylesheet" href="../../css/custom.min.css">
     <link rel="stylesheet" href="css/styles.css">     
   </head>
   <body>
     <div class="navbar navbar-expand-lg fixed-top navbar-light bg-light">
       <div class="container">
-        <a href="../index.html" class="navbar-brand">Pesquisa Operacional</a>
+        <a href="../../index.html" class="navbar-brand">Pesquisa Operacional</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -22,25 +22,25 @@
 
           <ul class="nav navbar-nav ml-auto">
             <li class="nav-item">
-              <a class="nav-link" href="../T1/index.html">Simplex</a>
+              <a class="nav-link" href="../../T2/index.html">Simplex - Duas Fases</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T2/index.html">Simplex - Duas Fases</a>
+              <a class="nav-link" href="../../T3/index.html">Cortes</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T3/index.html">Cortes</a>
+              <a class="nav-link" href="../../T4/index.html">Bifurca&ccedil;&atilde;o e Limite</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T4/index.html">Bifurca&ccedil;&atilde;o e Limite</a>
+              <a class="nav-link" href="../../T5/index.html">Transporte</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T5/index.html">Transporte</a>
+              <a class="nav-link" href="../../T6/index.html">Transbordo</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T6/index.html">Transbordo</a>
+              <a class="nav-link" href="../../T7/index.html">Aloca&ccedil;&atilde;o</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T7/index.html">Aloca&ccedil;&atilde;o</a>
+              <a class="nav-link" href="../../E1/index.html">Dualidade</a>
             </li>
           </ul>
         </div>
@@ -52,8 +52,8 @@
       <div class="page-header" id="banner">
         <div class="row center">
           <div class="col-lg-12 col-md-12 col-sm-12">
-            <h1>Dualidade</h1>
-            <p class="lead">Convers&atilde;o de Problema na forma Primal em Dual.</p>
+            <h1>Simplex</h1>
+            <p class="lead">M&eacute;todo Simplex de Uma Fase</p>
           </div>
         </div>
       </div>
@@ -79,7 +79,11 @@
                       <input type="number" id="numVariaveis" min="2" max="10" value="2" style="width: 40px;"></p>
                       <p class="lead">N&uacute;mero de restri&ccedil;&otilde;es: 
                       <input type="number" id="numRestricoes" min="1" max="10" value="1" style="width: 40px;"></p>
-                      <button class="btn btn-success" id="btCalcula" type="button">Converter</button>
+                      <label class="form-check-label lead">
+                        <input class="form-check-input" id="mostrarIte" type="checkbox" checked>
+                        Mostrar itera&ccedil;&otilde;es
+                      </label><br><br>
+                      <button class="btn btn-success" id="btCalcula" type="button">Calcular</button>
                       <button class="btn btn-danger" id="btLimpa" type="button">Limpar</button>
                     </form>                        
                   </div>
@@ -100,17 +104,10 @@
               </div> <!-- row -->
               <div class="row">
                 <div class="col-md-12">
-                  <h5 class="lead">Restri&ccedil;&otilde;es</h5>
-                  <div id="restricoes" style="white-space: pre;"></div>
+                    <h5 class="lead">Restri&ccedil;&otilde;es</h5>
+                    <div id="restricoes" style="white-space: pre;"></div>
                 </div>
-              </div> <!-- row -->
-              <br>
-              <div class="row">
-                <div class="col-md-12">
-                  <h5 class="lead">Vari&aacute;veis Livres</h5>
-                  <div id="variaveis-livres" style="white-space: nowrap;"></div>
-                </div>
-              </div> <!-- row -->
+              </div>
             </div> <!-- card-body -->
           </div> <!-- card -->
         </div> <!-- col-md-6 -->
@@ -136,28 +133,20 @@
                 <div class="card-body">
                   <div class="row">
                     <div class="col-md-12">
-                      <h4 class="card-title" style="text-align: center;">Problema Primal</h4>
-                      <p class="lead" id="problema-primal" style="text-align: center;"></p>
+                      <h4 class="card-title" style="text-align: center;">Forma Padr&atilde;o</h4>
+                      <p class="lead" id="forma-padrao" style="text-align: center;"></p>
                       <p class="lead" style="text-align: center;"><b>sujeito a:</b></p>
-                      <p class="lead" id="problema-primal-restricoes" style="text-align: center;"></p>
-                      <p class="lead" id="msg-revisao" style="text-align: center;"></p><br>
-                    </div>
-                  </div>
-                  <div class="row" id="primal-revisado" style="display: none;">
-                    <div class="col-md-12">
-                      <h4 class="card-title" style="text-align: center;">Problema Primal Revisado</h4>
-                      <p class="lead" id="problema-primal-revisado" style="text-align: center;"></p>
-                      <p class="lead" style="text-align: center;"><b>sujeito a:</b></p>
-                      <p class="lead" id="problema-primal-revisado-restricoes" style="text-align: center;"></p>
-                      <p class="lead" id="msg-final" style="text-align: center;"></p><br>
+                      <p class="lead" id="forma-padrao-restricoes" style="text-align: center;"></p><br>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col-md-12">
-                      <h4 class="card-title" style="text-align: center;">Problema Dual</h4>
-                      <p class="lead" id="problema-dual" style="text-align: center;"></p>
-                      <p class="lead" style="text-align: center;"><b>sujeito a:</b></p>
-                      <p class="lead" id="problema-dual-restricoes" style="text-align: center;"></p><br>
+                      <h4 class="card-title" style="text-align: center;">Resultado obtido</h4>
+                      <p id="resultado-final" class="lead" style="text-align: center;"></p>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-12" id="iteracoes" style="overflow-x:scroll; display:none;">
                     </div>
                   </div>
                 </div> <!-- card-body -->
@@ -179,10 +168,10 @@
     </div>
 
 
-    <script type="text/javascript" src="../js/jquery-3.2.1.min.js"></script>
-    <script src="../js/popper.min.js"></script>
-    <script src="../js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../js/custom.js"></script>
+    <script type="text/javascript" src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/popper.min.js"></script>
+    <script src="../../js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../js/custom.js"></script>
     <script type="text/javascript" src="js/scripts.js"></script>
   </body>
 </html>

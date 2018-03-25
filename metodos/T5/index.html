@@ -2,17 +2,17 @@
 <html lang="pt-br">
   <head>
     <meta charset="utf-8">
-    <title>Transbordo | Pesquisa Operacional</title>
+    <title>Transporte | Pesquisa Operacional</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="stylesheet" href="../css/bootstrap.min.css" media="screen">
-    <link rel="stylesheet" href="../css/custom.min.css">
+    <link rel="stylesheet" href="../../css/bootstrap.min.css" media="screen">
+    <link rel="stylesheet" href="../../css/custom.min.css">
     <link rel="stylesheet" href="css/styles.css">     
   </head>
   <body>
     <div class="navbar navbar-expand-lg fixed-top navbar-light bg-light">
       <div class="container">
-        <a href="../index.html" class="navbar-brand">Pesquisa Operacional</a>
+        <a href="../../index.html" class="navbar-brand">Pesquisa Operacional</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -22,25 +22,25 @@
 
           <ul class="nav navbar-nav ml-auto">
             <li class="nav-item">
-              <a class="nav-link" href="../T1/index.html">Simplex</a>
+              <a class="nav-link" href="../../T1/index.html">Simplex</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T2/index.html">Simplex - Duas Fases</a>
+              <a class="nav-link" href="../../T2/index.html">Simplex - Duas Fases</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T3/index.html">Cortes</a>
+              <a class="nav-link" href="../../T3/index.html">Cortes</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T4/index.html">Bifurca&ccedil;&atilde;o e Limite</a>
+              <a class="nav-link" href="../../T4/index.html">Bifurca&ccedil;&atilde;o e Limite</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T5/index.html">Transporte</a>
+              <a class="nav-link" href="../../T6/index.html">Transbordo</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../T7/index.html">Aloca&ccedil;&atilde;o</a>
+              <a class="nav-link" href="../../T7/index.html">Aloca&ccedil;&atilde;o</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../E1/index.html">Dualidade</a>
+              <a class="nav-link" href="../../E1/index.html">Dualidade</a>
             </li>
           </ul>
         </div>
@@ -52,8 +52,8 @@
       <div class="page-header" id="banner">
         <div class="row center">
           <div class="col-lg-12 col-md-12 col-sm-12">
-            <h1>Transbordo</h1>
-            <p class="lead">Resolu&ccedil;&atilde;o de Problemas de Transbordo pelo M&eacute;todo de Transporte.</p>
+            <h1>Transporte</h1>
+            <p class="lead">M&eacute;todo Simplex para Problemas de Transporte.</p>
           </div>
         </div>
       </div>
@@ -77,9 +77,7 @@
                       <p class="lead">N&uacute;mero de ofertas: 
                       <input type="number" id="ofertas" min="2" max="10" value="2" style="width: 40px;"></p>
                       <p class="lead">N&uacute;mero de demandas: 
-                      <input type="number" id="demandas" min="2" max="10" value="2" style="width: 40px;"></p> 
-                      <p class="lead">N&uacute;mero de n&oacute;s de transbordo: 
-                      <input type="number" id="transbordo" min="0" max="5" value="0" style="width: 40px;"></p>
+                      <input type="number" id="demandas" min="2" max="10" value="2" style="width: 40px;"></p>
                       <label class="form-check-label lead">
                         <input class="form-check-input" id="mostrarIte" type="checkbox" checked>
                         Mostrar itera&ccedil;&otilde;es
@@ -99,16 +97,9 @@
             <div class="card-body" style="overflow-x: scroll;">
               <div class="row">
                 <div class="col-md-12">
-                    <h5 class="lead">N&oacute;s de Oferta com Transbordo</h5>
-                    <div id="oferta-transbordo"></div>
-                    <h5 class="lead">N&oacute;s de Demanda com Transbordo</h5>
-                    <div id="demanda-transbordo"></div>
-                </div>
-              </div>
-              <div class="row">
-                <div class="col-md-12">
-                  <h5 class="lead">Quadro Simplex para Transbordo</h5>
+                  <h5 class="lead">Quadro Simplex para Transporte</h5>
                   <div id="quadro" style="white-space: nowrap;"></div>
+                  <p class="lead">*[-] para arcos n&atilde;o existentes.</p>
                 </div>
               </div> <!-- row -->
             </div> <!-- card-body -->
@@ -165,10 +156,10 @@
     </div>
 
 
-    <script type="text/javascript" src="../js/jquery-3.2.1.min.js"></script>
-    <script src="../js/popper.min.js"></script>
-    <script src="../js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="../js/custom.js"></script>
+    <script type="text/javascript" src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/popper.min.js"></script>
+    <script src="../../js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../../js/custom.js"></script>
     <script type="text/javascript" src="js/scripts.js"></script>
   </body>
 </html>
